@@ -1,4 +1,4 @@
-# SylowTheoremsProject
+# SylowTheromsProject
 
 ## GitHub configuration
 
