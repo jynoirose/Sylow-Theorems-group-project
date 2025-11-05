@@ -1,0 +1,153 @@
+import Mathlib.Tactic
+import Mathlib.Algebra.Category.Grp.FiniteGrp
+import Aesop
+import Mathlib.Data.Set.CoeSort
+import Mathlib.Data.SProd
+import Mathlib.Data.Subtype
+import Mathlib.Order.Notation
+import Mathlib.Algebra.NeZero
+import Mathlib.Data.Finset.Attach
+import Mathlib.Data.Finset.Disjoint
+import Mathlib.Data.Finset.Erase
+import Mathlib.Data.Finset.Filter
+import Mathlib.Data.Finset.Range
+import Mathlib.Data.Finset.Lattice.Lemmas
+import Mathlib.Data.Finset.SDiff
+import Mathlib.Data.Fintype.Defs
+import Mathlib.SetTheory.Cardinal.Basic
+import Mathlib.Data.Set.Image
+
+universe u v
+
+def inj (X Y : Type u) (f : X → Y) := ∀ (x : X) , ∀ (y : X) , f x = f y → x = y
+def surj (X Y : Type u) (f : X → Y) := ∀ (y : Y) , ∃ (x : X) , f x = y
+def bij (X Y : Type u) (f : X → Y) := inj X Y f ∧ surj X Y f
+def image_of_func (X Y : Type u) (f : X → Y) : Set Y := {y : Y | ∃ x : X, f x = y}
+
+
+/-
+#print image_of_func
+--a bijection is an injection
+lemma bij_is_inj {G : Type u} {H : Type u} [Finite G] [Finite H]
+ (f : G → H) : bij G H f →  inj G H f := by
+intro h
+cases h with
+| intro left right
+exact left
+done
+--a bijection is a surjection
+lemma bij_is_surj {G : Type u} {H : Type u} [Finite G] [Finite H]
+ (f : G → H) : bij G H f →  surj G H f := by
+intro h
+cases h with
+| intro left right
+exact right
+done
+-/
+
+--(hrange : {h : H | ∃ g : G, f g = h}) : #(hrange)
+
+--break it up into two elts in the image are equal only if preimages are equal
+
+--(hf : Set.MapsTo f ↑s ↑t)
+
+--trying to construct a map to show
+lemma inj_im_set {G H : Type u} [Fintype G] (f : G → H) (hinj : inj G H f)
+ (hf : Set.MapsTo f G {h : H | ∃ g : G, f g = h}): kih  := by
+intros h1 h2
+refine Ne.intro ?_
+done
+
+
+--image has cardinality same as G
+--if subset has cardinality α then set has cardinality ≥ α
+lemma image_card {G : Type u} {H : Type u} [Finite G] [Finite H] (f : G → H) (a : ℕ)
+ (ha : Nat.card G = a) (hinj : inj G H f) : Nat.card {h : H | ∃ g : G, f g = h} = a := by
+ rw [← ha]
+ refine Nat.card_eq_of_bijective ?_ ?_
+sorry
+ done
+-- the image of an injection has the same order as its preimage (for both finite)
+
+
+lemma inj_card {G : Type u} {H : Type u} [Finite G] [Finite H]
+(a b : ℕ) (hg : Nat.card G = a) (hh : Nat.card H = b) (f : G → H) (hinj : inj G H f) : a ≤ b := by
+rw[← hh, ← hg]
+exact Nat.card_le_card_of_injective f hinj
+--image has cardinality same as G
+--if subset has cardinality α then set has cardinality ≥ α
+done
+
+
+
+#check Set.range
+--the image of a surjection has the same order as the set the surjection maps to (for both finite)
+lemma surj_card {G : Type u} {H : Type u} [Finite G] [Finite H]
+(a b : ℕ) (hg : Nat.card G = a) (hh : Nat.card H = b) (f : G → H) (hsurj : surj G H f) : b ≤ a := by
+sorry
+done
+
+
+--if there's a bijection between two finite sets then the sets have the same order
+theorem bij_card {G : Type u} {H : Type u} [Finite G] [Finite H]
+(a b : ℕ) (hg : Nat.card G = a) (hh : Nat.card H = b) (f : G → H) (hbij : bij G H f) : a = b := by
+apply le_antisymm
+cases hbij with
+| intro left right
+· exact inj_card a b hg hh f left
+cases hbij with
+| intro left right
+· exact surj_card a b hg hh f right
+done
+
+/-
+variable {I U : Type}
+variable (A : I → Set U)
+variable (D E F : Set U)
+variable (x : U)
+
+def pairwise_disj {U_1 U_2 : Set U} := (x ∈ U_1 → x ∉ U_2) ∧ (x ∈ U_2 → x ∉ U_1)
+-/
+variable {I U : Type}
+def disj (A B : Set U) : Prop := ∀ ⦃x⦄, x ∈ A → x ∈ B → False
+
+variable (V : I → Set U)(i j : I)
+def iUnion (A : I → Set U) : Set U := { x | ∃ i : I, x ∈ A i }
+def iInter (A : I → Set U) : Set U := { x | ∀ i : I, x ∈ A i }
+def pairwise_disj_eq (V : I → Set U) : Prop
+ := ∀ x, x ∈ V i → x ∈ V j → i = j
+
+--lemma parwise_disj_sum (V : I → Set U) (h : pairwise_disj_eq V) (V_1 : iUnion V)
+
+
+
+
+
+
+
+def pairwise_disj_false (V : I → Set U) (i j : I) (h : i ≠ j) : Prop
+ := ∀ x, x ∈ V i → x ∈ V j → False
+
+example (A B : Set U) (h : ∀ x, ¬ (x ∈ A ∧ x ∈ B)) :
+  disj A B :=
+fun x ↦
+fun h1 : x ∈ A ↦
+fun h2 : x ∈ B ↦
+have h3 : x ∈ A ∧ x ∈ B := And.intro h1 h2
+show False from h x h3
+
+example (A B : Set U) (h1 : disj A B) (x : U)
+    (h2 : x ∈ A) (h3 : x ∈ B) : False := by
+    apply h1
+    · exact h2
+    · exact h3
+
+
+/- new section: proving for finite sums of fixed number.
+Try to generalise the existing statements
+want to generalise the following lemmas-/
+lemma Finset.card_union_eq_card_add_card : #(s ∪ t) = #s + #t ↔ Disjoint s t := by
+  rw [← card_union_add_card_inter]; simp [disjoint_iff_inter_eq_empty]
+
+#check Finset.card_union_add_card_inter
+#check Finset.disjoint_iff_inter_eq_empty
