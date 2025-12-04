@@ -2,28 +2,13 @@
 
 import Mathlib.GroupTheory.Sylow -- test
 import Mathlib.Data.Nat.Prime.Basic  -- test
+import Mathlib.Data.Nat.Choose.Basic  -- test
 import Mathlib.Data.Nat.Basic
 import Mathlib.Tactic -- reduce these imports later
 
-#check Nat.Prime --test
-#check Sylow --test
-#eval 2 + 3 --test
-
 open ZMod
 
--- theorem sylow_1 {p n : ℕ} {G : Type*} [Group G] [Fintype G]
---     (hp : p.Prime)
---     (hpdivG : p ^ n ∣ Nat.card G)
---     (hpdivg2 : ¬(p^(n+1) ∣ Nat.card G)) :
---     ∃ (H : Subgroup G), Nat.card H = p ^ n := by
-
---   sorry
-
 theorem binomial_prime_mul {p i : ℕ} (hp : p.Prime) (hip : 0 < i ∧ i < p) : p ∣ (p.choose i) := by
-  sorry
-
-theorem binomial_prime_pow_mul {p n m : ℕ} (hp : p.Prime) (hmp : m.Coprime p) :
-    (Nat.choose (p^n * m) (p^n) : ZMod p) = (m : ZMod p) := by
   sorry
 
 open Polynomial
@@ -32,7 +17,8 @@ variable {R : Type*} [Semiring R] {r : R}
 
 -- i should to make this less ugly
 -- proof that (1+X)^p=1+X^p mod p
-theorem binomial_pow_p_mod_p {p : ℕ} (hp : p.Prime) : (1 + X : (ZMod p)[X]) ^ p = 1 + X ^ p := by
+theorem binomial_pow_p_mod_p {p : ℕ} (hp : p.Prime) :
+    (1 + X : (ZMod p)[X]) ^ p = 1 + X ^ p := by
   -- binomial expansion
   rw [add_pow]
   -- split off the last term in the sum
@@ -80,9 +66,30 @@ theorem binomial_pow_p_n_mod_p {p n : ℕ} {hp : p.Prime} :
 theorem binomial_pow_p_n_m_mod_p {p n m : ℕ} {hp : p.Prime} :
     (1 + X : (ZMod p)[X]) ^ ((p ^ n) * m) = (1 + X ^ (p ^ n)) ^ m := by
 
-  sorry
+  have composed_lemma := congrFun (congrArg HPow.hPow (@binomial_pow_p_n_mod_p p n hp)) m
+  rw [← pow_mul] at composed_lemma
+  exact composed_lemma
 
+theorem choose_ignores_pn_mod_p {p n m j : ℕ} {hp : p.Prime} :
+    (Nat.choose (p^n * m) (p^n * j) : ZMod p) = Nat.choose m j := by
 
-theorem test {a b m p : ℕ} {hp : p.Prime} {h : a = (b : (ZMod p))} : a^m = (b^m : ZMod p) := by
+  have polynomial_equality := @binomial_pow_p_n_m_mod_p p n m hp
+  rw [ext_iff] at polynomial_equality
+  specialize polynomial_equality (p^n * j)
+  repeat rw [coeff_one_add_X_pow] at polynomial_equality
+  have h_expand : (1 + X ^ (p ^ n) : Polynomial (ZMod p)) = expand (ZMod p) (p ^ n) (1 + X) := by
+    simp [expand_X]
+  rw [h_expand] at polynomial_equality
+  rw [← map_pow] at polynomial_equality
+  rw [coeff_expand_mul'] at polynomial_equality
+  · rw [coeff_one_add_X_pow] at polynomial_equality
+    exact polynomial_equality
+  apply pow_pos
+  exact hp.pos
 
-  exact congrFun (congrArg HPow.hPow h) m
+theorem binomial_prime_pow_mul {p n m : ℕ} (hp : p.Prime) :
+    (Nat.choose (p^n * m) (p^n) : ZMod p) = (m : ZMod p) := by
+
+  have binomial_equality := @choose_ignores_pn_mod_p p n m 1 hp
+  simp at binomial_equality
+  exact binomial_equality
