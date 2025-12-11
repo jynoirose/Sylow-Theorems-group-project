@@ -1,1 +1,8 @@
-
+import Mathlib.Algebra.Group.Subgroup.Basic
+import Mathlib.Data.Fintype.Basic
+import Mathlib.Data.Finset.Basic
+import Mathlib.Data.Set.Basic
+import Mathlib.Data.Quot
+import Mathlib.Data.Fintype.Card
+import Mathlib.Data.Fintype.EquivFin
+import Mathlib.Data.Fintype.Prod
