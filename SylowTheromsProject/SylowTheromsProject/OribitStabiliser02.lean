@@ -253,7 +253,7 @@ theorem orbit_card_dvd_group_card
   simp [dvd_mul_right] -- Use a ∣ a * b to directly obtain the result
 
 ----
-
+-- Finset.powersetCard in mathlib
 -- define X(G,p,n) = {S ⊆ G | |S| = p ^ n}
 def X (G : Type*) [Group G] (p n : ℕ) : Set (Set G) :=
   {S : Set G | Nat.card S = p ^ n}
@@ -297,7 +297,7 @@ theorem claim_1 {G : Type*} [Group G] {p n r : ℕ}
     (S : Fin r → X G p n)
     (H : Fin r → Subgroup G)
     (hH : ∀ i, (H i : Set G) = (S i).val)
-    (i : Fin r) : 
+    (i : Fin r) :
     (stabilizer G (S i) : Set G) = (S i).val := by
   ext g
   constructor
@@ -310,7 +310,7 @@ theorem claim_1 {G : Type*} [Group G] {p n r : ℕ}
       rw [hg]
     rw [this]
     exact ⟨1, h1_in_Si, mul_one g⟩
-  
+
   · intro hg_in_Si
     ext x
     constructor
@@ -330,22 +330,104 @@ theorem claim_1_subgroup {G : Type*} [Group G] {p n r : ℕ}
     (S : Fin r → X G p n)
     (H : Fin r → Subgroup G)
     (hH : ∀ i, (H i : Set G) = (S i).val)
-    (i : Fin r) : 
+    (i : Fin r) :
     H i = stabilizer G (S i) := by
   have h := claim_1 S H hH i
   apply SetLike.coe_injective
   rw [hH i, ← h]
 
--- Stab_G(S_i) = S_i is a Sylow p subgroup
-theorem S_i_is_sylow {G : Type*} [Group G] [Fintype G] {p n r : ℕ} 
-    [Fact p.Prime]
-    (h_card : Fintype.card G = p ^ n * (Fintype.card G / p ^ n))
-    (S : Fin r → X G p n)
-    (H : Fin r → Subgroup G)
-    (hH : ∀ i, (H i : Set G) = (S i).val)
-    (hH_card : ∀ i, Nat.card (H i) = p ^ n)
-    (i : Fin r) : 
-    IsPGroup p (H i) ∧ ∀ (K : Subgroup G), IsPGroup p K → H i ≤ K → H i = K := by
+-- prove card of H i is p^n
+lemma H_card_eq_pow {G : Type*} [Group G] [Fintype G] {p n : ℕ}
+    (S : X G p n)
+    (H : Subgroup G)
+    (hH : (H : Set G) = S.val) :
+    Nat.card H = p ^ n := by
+  -- by prop of S, we have |S.val| = p^n
+  have hS : Nat.card S.val = p ^ n := S.property
+  -- because H set = S.val
+  have : Nat.card (H : Set G) = Nat.card S.val := by
+    rw [hH]
+  rw [hS] at this
+  exact this
+
+
+-- if |H| = p^n，then H 是 p-group
+lemma isPGroup_of_card_eq_prime_pow {G : Type*} [Group G] {p n : ℕ} [Fact p.Prime]
+    (H : Subgroup G) [Fintype H] (h : Fintype.card H = p ^ n) : IsPGroup p H := by
+  rw [IsPGroup.iff_card]
+  exact ⟨n, by rw [Nat.card_eq_fintype_card]; exact h⟩
+
+
+lemma fintype_card_of_nat_card {G : Type*} [Group G] [Fintype G] {p n : ℕ}
+    (H : Subgroup G) [Fintype H] (h : Nat.card H = p ^ n) : Fintype.card H = p ^ n := by
+  rw [← Nat.card_eq_fintype_card]
+  exact h
+
+-- main thorem of Claim one：H i (group version of S_i) is Sylow p-group
+
+theorem H_is_sylow {G : Type*} [Group G] [Fintype G] {p n : ℕ}
+    [hp : Fact p.Prime]
+    (h_pn1_not_dvd : ¬ (p ^ (n + 1) ∣ Fintype.card G))
+    (H : Subgroup G)
+    (hH_card : Nat.card H = p ^ n) :
+    IsPGroup p H ∧ ∀ (K : Subgroup G), IsPGroup p K → H ≤ K → H = K := by
+  haveI : Fintype H := Fintype.ofFinite H
+  have hH_fintype_card : Fintype.card H = p ^ n := fintype_card_of_nat_card H hH_card
+  constructor
+
+  · exact isPGroup_of_card_eq_prime_pow H hH_fintype_card
+
+  · intro K hK_pgroup hHK
+    by_contra hne
+    have hH_lt_K : H < K := lt_of_le_of_ne hHK hne
+    haveI : Fintype K := Fintype.ofFinite K
+    have card_lt : Nat.card H < Nat.card K := by
+      obtain ⟨k, hkK, hkH⟩ := SetLike.exists_of_lt hH_lt_K
+      have h_le : Nat.card H ≤ Nat.card K := by
+        apply Nat.card_mono (Set.toFinite _)
+        exact SetLike.coe_subset_coe.mpr (le_of_lt hH_lt_K)
+      have h_ne : Nat.card H ≠ Nat.card K := by
+        intro heq
+        have hsub : (H : Set G) ⊆ (K : Set G) := SetLike.coe_subset_coe.mpr (le_of_lt hH_lt_K)
+        have hcard_eq : (H : Set G).encard = (K : Set G).encard := by
+          rw [Set.encard_eq_coe_toFinset_card, Set.encard_eq_coe_toFinset_card]
+          congr 1
+          simp only [Set.toFinset_card, ← Nat.card_eq_fintype_card]
+          exact heq
+        have : (H : Set G) = (K : Set G) := by
+          apply (Set.toFinite _).eq_of_subset_of_encard_le hsub
+          exact le_of_eq hcard_eq.symm
+        rw [SetLike.coe_set_eq] at this
+        exact hkH (this ▸ hkK)
+      exact Nat.lt_of_le_of_ne h_le h_ne
+
+    rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card] at card_lt
+
+    obtain ⟨m, hm⟩ := hK_pgroup.exists_card_eq
+    rw [Nat.card_eq_fintype_card] at hm
+
+    have hK_dvd : Fintype.card K ∣ Fintype.card G := by
+      have := Subgroup.card_subgroup_dvd_card K
+      simp only [Nat.card_eq_fintype_card] at this
+      exact this
+
+    rw [hH_fintype_card, hm] at card_lt
+    have hn_lt_m : n < m := (Nat.pow_lt_pow_iff_right hp.out.one_lt).mp card_lt
+
+    have : p ^ (n + 1) ∣ Fintype.card G := by
+      have h_n1_le_m : n + 1 ≤ m := hn_lt_m
+      have h_pn1_dvd_pm : p ^ (n + 1) ∣ p ^ m := Nat.pow_dvd_pow p h_n1_le_m
+      exact Nat.dvd_trans h_pn1_dvd_pm (hm ▸ hK_dvd)
+
+    exact h_pn1_not_dvd this
+
+
+lemma claim23 {G : Type*} [Group G] {p n r : ℕ} [Fintype G] [MulAction G (X G p n)]
+ [DecidableEq (X G p n)]
+    (P : X G p n)
+    (hsame : (stabilizer G (P) : Set G) = (P).val)
+    (hS : Fintype (stabilizer G (P))) :
+    ∀ (P : X G p n), ¬ (p ∣ Fintype.card (orbit G P)) := by
+    have h0 : Fintype.card G = Fintype.card (orbit G P) * Fintype.card (stabilizer G P) := by
+      convert orbit_stabilizer_theorem G (X G p n) P
     sorry
-
-
