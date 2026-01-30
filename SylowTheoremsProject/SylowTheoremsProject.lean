@@ -31,4 +31,4 @@ theorem sylow_one_mod_prime
   (n m : ℕ)
   (hcard : Nat.card G = p ^ n * m)
   (hcop : IsCoprime p m) :
-  ↑(Nat.card (Syl_p G p)) = 1 := by sorry
+  ↑(Nat.card (Syl_p G p)) = (1:ZMod p) := by sorry
