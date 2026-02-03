@@ -23,7 +23,7 @@ theorem card_X_modeq_sum {G : Type*} [Group G] [Fintype G]
     {p n m : ℕ} [hp : Fact p.Prime]
     (hG : Fintype.card G = p ^ n * m)
     (hm : Nat.Coprime m p) :
-    Nat.card (X G p n) ≡ m [MOD p] := by
+    Nat.card (X G p n) = (m : ZMod p) := by
 
   letI : DecidableEq (X G p n) := Classical.decEq _
 
@@ -36,7 +36,8 @@ theorem card_X_modeq_sum {G : Type*} [Group G] [Fintype G]
     binomial_prime_pow_mul hp.out
 
   rw [h1, h2]
-  rwa [← nat_cast_zmod_eq_iff_modeq]
+  
+  exact h3
 
 -- We want to prove conclusion 36 with claim 1
 -- However, we need to transform claim one to single set form first
