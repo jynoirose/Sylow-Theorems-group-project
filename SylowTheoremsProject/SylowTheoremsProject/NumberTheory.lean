@@ -1,6 +1,14 @@
 -- def hello := "world"
 
-import SylowTheromsProject.Imports
+import Mathlib.GroupTheory.Sylow -- test
+import Mathlib.Data.Nat.Prime.Basic  -- test
+import Mathlib.Data.Nat.Choose.Basic  -- test
+import Mathlib.Data.Nat.Choose.Dvd  -- test
+import Mathlib.Data.Nat.Basic
+-- import Mathlib.NumberTheory.ZMod
+import Mathlib.Tactic -- reduce these imports later
+
+
 
 open ZMod
 
