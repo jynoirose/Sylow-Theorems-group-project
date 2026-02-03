@@ -653,16 +653,167 @@ lemma claim22_orb_2 {G I : Type*} [Group G] {p n : ℕ}
         exact mul_mem (inv_mem hg_in_P) hx
       · group
 -/
+/-- Left coset `gH` as a `Set G`. -/
+def leftCoset (H : Subgroup G) (g : G) : Set G := { x | g⁻¹ * x ∈ H }
+
+lemma leftCoset_eq_of_mem {H : Subgroup G} {g k : G}
+  (hk : k ∈ leftCoset H g) :
+  leftCoset H g = leftCoset H k := by
+
+  ext x
+  constructor
+
+  · intro hx
+    have hxH : g⁻¹ * x ∈ H := hx
+    -- hk has type: k ∈ leftCoset H g - needs to be ufolded to be used
+    have h_inv : (g⁻¹ * k)⁻¹ ∈ H := H.inv_mem hk
+    --Closure of H under multiplication
+    have hx' : (g⁻¹ * k)⁻¹ * (g⁻¹ * x) ∈ H := H.mul_mem h_inv hxH
+    -- simplifies (g⁻¹ * k)⁻¹ * (g⁻¹ * x) to k⁻¹ * x
+    simpa [leftCoset, mul_assoc] using hx'
+
+  · intro hx
+    have hxH : k⁻¹ * x ∈ H := hx
+    -- hk has type: k ∈ leftCoset H g - needs to be ufolded to be used
+    have hx' : (g⁻¹ * k) * (k⁻¹ * x) ∈ H := H.mul_mem hk hxH
+    simpa [leftCoset, mul_assoc] using hx'
+
+--This is a modfiedied version of Lemma 1.15 in the MA3K4 lecture notes and used to prove step 22 in claim 2
+theorem Eq_of_cosets {H : Subgroup G} {g k : G} :
+  k ∈ leftCoset H g ↔ leftCoset H g = leftCoset H k := by
+  constructor
+
+  · intro hk
+    exact leftCoset_eq_of_mem hk
+
+  · intro hEq
+    -- k ∈ leftCoset H k because 1 ∈ H
+    have hk : k ∈ leftCoset H k := by
+      change k⁻¹ * k ∈ H
+      simp
+
+    simpa [hEq] using hk
+
+/--This lemma states that if a subgroup H is equal to the orbit of an element V i, then the stabilizer of V i is equal to H -/
+/--The proof follows the notes in principal which uses Lemma 1.15 above, but due to type issues most of the proof is exchanging between H and (V i).val-/
+lemma claim22_orb_2 {G I : Type*} [Group G] {p n : ℕ}
+ [Fintype G] [Fintype I] [DecidableEq (X G p n)] (V : I → X G p n) (i : I)
+ (H : Subgroup G) (hgrp : H = (V i).val)
+ : stabilizer G (V i) = (V i).val := by
+  classical
+
+  -- First helper - left-multiplying every element of H by g gives exactly the left coset {x | g⁻¹ * x ∈ H}
+  have image_eq_leftCoset (H : Subgroup G) (g : G) :
+      (fun s : G => g * s) '' (H : Set G) = leftCoset H g := by
+    ext x
+    constructor
+    · rintro ⟨s, hs, rfl⟩
+      -- if x = g*s with s ∈ H, then g⁻¹*x = s ∈ H
+      simpa [leftCoset, mul_assoc] using hs
+    · intro hx
+      -- if g⁻¹*x ∈ H, just set s = g⁻¹*x so that x = g*s
+      refine ⟨g⁻¹ * x, hx, ?_⟩
+      simp [mul_assoc]
+
+  -- Second helper - the coset with 1 is just H itself
+  have leftCoset_one (H : Subgroup G) : leftCoset H (1 : G) = (H : Set G) := by
+    ext x
+    simp [leftCoset]
+
+  -- Rewrite the hypothesis so we can freely swap (V i).val with H
+  have hgrp_set : (H : Set G) = (V i).val := by
+    simpa using hgrp
+
+  -- We can now check membership to prove equality
+  ext g
+  constructor
+
+  · intro hg
+    -- hg means g fixes the set V i under the group action
+    have hg_eq : g • V i = V i := hg
+
+    -- Turn that equality in X G p n into equality of actual sets
+    have hg_set : (g • V i).val = (V i).val :=
+      congrArg Subtype.val hg_eq
+
+    -- The action is defined using left-multiplication and image
+    have himage :
+      (fun s : G => g * s) '' (V i).val = (V i).val := by
+      simpa [instMulActionGX] using hg_set
+
+    -- Replace (V i).val by H
+    have : (fun s : G => g * s) '' (H : Set G) = (H : Set G) := by
+      simpa [hgrp_set] using himage
+
+    -- Translate this into a statement about cosets
+    have hcoset : leftCoset H g = leftCoset H (1 : G) := by
+      calc
+        leftCoset H g
+        -- First rewrite it as the image under left-multiplication
+            = (fun s : G => g * s) '' (H : Set G) := by
+                symm; simpa using (image_eq_leftCoset H g)
+        -- Then use the fact we already proved: g * H = H
+        _ = (H : Set G) := this
+        -- Finally rewrite H itself as the coset with 1
+        _ = leftCoset H (1 : G) := by
+                symm; exact leftCoset_one H
+
+    -- Now use your coset lemma to get membership in H
+    have hgH : g ∈ leftCoset H (1 : G) := by
+      apply (Eq_of_cosets (H := H) (g := (1 : G)) (k := g)).2
+      simpa [eq_comm] using hcoset
+
+    -- leftCoset H 1 is just H, so we’re done
+    have : g ∈ (H : Set G) := by
+      simpa [leftCoset] using hgH
+    simpa [hgrp_set] using this
+
+  · intro hg_in_V
+    -- Start by rewriting membership in `(V i).val` as membership in H
+    have hgH : g ∈ (H : Set G) := by
+      simpa [hgrp_set] using hg_in_V
+
+    -- From `g ∈ H` we get `g⁻¹ ∈ H`, which means 1 is in the coset of g
+    have h1 : (1 : G) ∈ leftCoset H g := by
+      have : g⁻¹ ∈ H := H.inv_mem hgH
+      simpa [leftCoset] using this
+
+    -- If 1 is in the coset of g, the two cosets are equal
+    have hcoset : leftCoset H g = leftCoset H (1 : G) :=
+      leftCoset_eq_of_mem (H := H) (g := g) (k := (1 : G)) h1
+
+    -- Turn coset equality back into an equality of images
+    have himageH : (fun s : G => g * s) '' (H : Set G) = (H : Set G) := by
+      calc
+        (fun s : G => g * s) '' (H : Set G)
+            = leftCoset H g := by
+                simpa using (image_eq_leftCoset H g)
+        _ = leftCoset H (1 : G) := hcoset
+        _ = (H : Set G) := by
+                simpa using (leftCoset_one H)
+
+    -- Swap H back to `(V i).val`
+    have himageV :
+      (fun s : G => g * s) '' (V i).val = (V i).val := by
+      simpa [hgrp_set] using himageH
+
+    -- Finally lift this set equality back to equality in `X G p n`
+    apply (show g • V i = V i from ?_)
+    apply Subtype.ext
+    simpa [instMulActionGX] using himageV
+
 --prove orbit is not dividible by p for an arbitrary element of X G p n
 lemma claim23 {G I : Type*} [Group G] {p n m : ℕ} [Fintype G] [Fintype I]
  [DecidableEq (X G p n)] (V : I → X G p n) (i : I)
-    (hsame : stabilizer G (V i) = (V i).val) -- need Reece's bit to remove this assumption
+    (H : Subgroup G) (hgrp : H = (V i).val) --Needed to apply claim22_orb_2
     (hS : Fintype (stabilizer G (V i)))
     (hP : Fintype (V i))
     (hm : p.Coprime m)
     (P_order : Fintype.card (V i).val = p^n)
     (G_order : Fintype.card G = m * p^n)
     (hPrime : Nat.Prime p) : ¬ (p ∣ Fintype.card (orbit G (V i))) := by
+    have hsame : stabilizer G (V i) = (V i).val := by
+      exact claim22_orb_2 (V := V) (i := i) (H := H) hgrp
     have h₀ : Fintype.card G
     = Fintype.card (orbit G (V i)) * Fintype.card (stabilizer G (V i)) := by
       convert orbit_stabilizer_theorem G (X G p n) (V i)
@@ -706,7 +857,6 @@ lemma claim23 {G I : Type*} [Group G] {p n m : ℕ} [Fintype G] [Fintype I]
 --thus V is in fact from notdivset, i.e. notdivset = I
 lemma claim24_pt1 {G I : Type*} [Group G] {p n m : ℕ} [Fintype G] [Fintype I] [DecidableEq (X G p n)]
  (V : I → X G p n) (i : I)
-    (hsame : stabilizer G (V i) = (V i).val) -- delete when we get Reece's bit
     (hS : Fintype (stabilizer G (V i)))
     (hP : Fintype (V i))
     (hm : p.Coprime m)
@@ -716,7 +866,7 @@ lemma claim24_pt1 {G I : Type*} [Group G] {p n m : ℕ} [Fintype G] [Fintype I] 
     --(hsylp : ∀ (i : Fin r), Nat.card (S i) = p ^ n) :
     --∃ (j : notdivset_orb V), orbit G (V i) = orbit G (S j) := by
     have h₀ : ¬ (p ∣ Fintype.card (orbit G (V i))) := by
-      convert claim23 V i hsame hS hP hm P_order G_order hPrime
+      exact claim23 (V := V) (i := i) (H := H) hgrp hS hP hm P_order G_order hPrime
     have h₁ : i ∈ notdivset_orb V := by
       exact h₀
     exact h₁

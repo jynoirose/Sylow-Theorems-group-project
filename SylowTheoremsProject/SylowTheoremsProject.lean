@@ -1,11 +1,12 @@
-import Mathlib.Algebra.Group.Basic
-import Mathlib.Data.Fintype.Basic
-import Mathlib.Algebra.Group.Subgroup.Basic
-import Mathlib.Data.Nat.ModEq
-import Mathlib.Data.ZMod.Basic
-import Mathlib.SetTheory.Cardinal.Finite
-import Mathlib.RingTheory.Coprime.Basic
-/-These imports will be tidied, once I sort the import file-/
+import SylowTheoremsProject.Imports
+import SylowTheoremsProject.Skeleton_9&10
+import SylowTheoremsProject.Lagrange
+import SylowTheoremsProject.claim_2_orb_2
+import SylowTheoremsProject.NumberTheory
+import SylowTheoremsProject.OrbitStabilizer
+import SylowTheoremsProject.Conclusion
+import SylowTheoremsProject.Claim1
+import SylowTheoremsProject.Bijectivity Statements
 
 def isPSubgroup {G : Type _} [Group G] [Fintype G] (p : ℕ)
     (H : Subgroup G) : Prop :=

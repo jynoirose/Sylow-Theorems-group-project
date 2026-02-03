@@ -1,11 +1,171 @@
 --skeleton 9 & 10
-import Mathlib.Tactic
-import Mathlib.Data.Set.Card.Arithmetic
+import SylowTheoremsProject.Imports
+import SylowTheoremsProject.OrbitStabilizer
+import SylowTheoremsProject.Claim1
 
 --open Set
 open Fintype
 open Finset
 universe u v
+
+variable {G : Type*} [Group G] [Fintype G]
+variable {p n : ℕ} [Fact p.Prime]
+
+/--Step 5 for every `S : X G p n`, there exists `T` in the orbit of `S` such that `1 ∈ T`-/
+lemma step5_exists_one_mem_orbit (S : (X G p n)) :
+    ∃ T : (X G p n), T ∈ orbit G S ∧ (1 : G) ∈ (T : Set G) := by
+  classical
+
+  -- `S ∈ X G p n` means `|S| = p^n`
+  have hNat : Nat.card ((S : Set G)) = p ^ n := by
+    simpa [X] using (S.property)
+
+  -- Put a Fintype on the underlying set so we can use Fintype.card lemmas
+  letI : Fintype (↑(S : Set G)) := Fintype.ofFinite (↑(S : Set G))
+
+  -- Convert Nat.card to Fintype.card
+  have hcard : Fintype.card (↑(S : Set G)) = p ^ n := by
+    simpa [Nat.card_eq_fintype_card] using hNat
+
+  -- p is prime so p > 0
+  have hp0 : 0 < p := (Fact.out : Nat.Prime p).pos
+  -- so S has positive size and is nonempty
+  have hpos : 0 < Fintype.card (↑(S : Set G)) := by
+    simpa [hcard] using (pow_pos hp0 n)
+
+  -- choose s ∈ S
+  obtain ⟨s⟩ : Nonempty (↑(S : Set G)) := Fintype.card_pos_iff.1 hpos
+
+  -- Let g = s⁻¹, and set T = g • S; then 1 ∈ T because g*s = 1.
+  let g : G := (s : G)⁻¹
+  refine ⟨g • S, ?_, ?_⟩
+  · exact ⟨g, rfl⟩
+  ·
+    refine ⟨(s : G), s.property, ?_⟩
+    simp [g]
+
+/--Step 6-/
+lemma orbit_eq_of_mem
+  {G X : Type*} [Group G] [MulAction G X]
+  {S T : X} (h : T ∈ orbit G S) :
+  orbit G T = orbit G S := by
+  --Orbits are either equal or disjoint
+  have h' := orbit_disjoint_or_eq (G := G) (X := X) T S
+  cases h' with
+  --They are equal and we are done
+  | inl hEq =>
+      exact hEq
+  --Or they are disjoint
+  | inr hDisj =>
+      -- Show T is in the orbit of T
+      have hTT : T ∈ orbit G T := by
+        exact ⟨(1 : G), by simp⟩
+      -- contradiction: T is in both disjoint orbits
+      have : False := (Set.disjoint_left.1 hDisj) hTT h
+      exact False.elim this
+
+/-- Step 7 -/
+/-- The type of distinct orbits, i.e., the quotient of X by the orbit relation -/
+def OrbitIndex (G X : Type*) [Group G] [MulAction G X] :=
+  Quotient (MulAction.orbitRel G X)
+
+/-- The family of distinct orbits, indexed without repetition. -/
+def OrbitFamily
+  {G X : Type*} [Group G] [MulAction G X] :
+  OrbitIndex G X → Set X :=
+  Quotient.lift
+    (fun x : X => orbit G x) -- representative orbit
+    (by
+      intro a b hab
+      -- `hab : ∃ g0, g0 • b = a`  (orbit relation)
+      rcases hab with ⟨g0, hg0⟩
+      ext x
+      constructor
+      · --Forward directionx - `x ∈ orbit G a → x ∈ orbit G b`
+        rintro ⟨g, rfl⟩
+        refine ⟨g * g0, ?_⟩
+        -- (g * g0) • b = g • (g0 • b) = g • a
+        simp [mul_smul, hg0]
+      · -- Backward direction - `x ∈ orbit G b → x ∈ orbit G a`
+        rintro ⟨g, rfl⟩
+        refine ⟨g * g0⁻¹, ?_⟩
+        -- rewrite g0⁻¹•a = b using hg0
+        have hb : g0⁻¹ • a = b := by
+          have h1 : g0⁻¹ • (g0 • b) = g0⁻¹ • a :=
+            congrArg (fun t => g0⁻¹ • t) hg0
+          -- simplify left side to b
+          -- `h1 : b = g0⁻¹ • a`, so symm gives `g0⁻¹ • a = b`
+          have : b = g0⁻¹ • a := by
+            simpa [inv_smul_smul] using h1
+          simpa using this.symm
+        -- now substitute hb
+        simp [mul_smul, hb])
+
+/-- Step 7 - range OrbitFamily = range orbit -/
+lemma OrbitFamily_surjective
+  {G X : Type*} [Group G] [MulAction G X] :
+  Set.range (OrbitFamily (G := G) (X := X))
+    = Set.range (orbit G : X → Set X) := by
+  classical
+  ext A
+  constructor
+  -- OrbitFamily side → orbit side
+  · rintro ⟨i, rfl⟩
+    -- reduce quotient index to representative
+    refine Quotient.inductionOn i (fun x => ?_)
+    exact ⟨x, rfl⟩
+
+  -- Orbit side → OrbitFamily side
+  · rintro ⟨x, rfl⟩
+    refine ⟨Quotient.mk _ x, ?_⟩
+    rfl
+
+/--Distinct orbit indices give disjoint orbits --/
+lemma OrbitFamily_pairwise_disjoint
+  {G X : Type*} [Group G] [MulAction G X] :
+  Pairwise (fun i j =>
+    Disjoint (OrbitFamily (G := G) (X := X) i)
+             (OrbitFamily (G := G) (X := X) j)) := by
+  classical
+  intro i j hij
+  -- push inequality inside quotient induction
+  revert hij
+  refine Quotient.inductionOn₂ i j (fun a b => ?_)
+  intro hij
+  -- now hij : ⟦a⟧ ≠ ⟦b⟧
+
+  -- use orbit disjoint-or-equal lemma
+  have h := orbit_disjoint_or_eq (G := G) (X := X) a b
+  cases h with
+
+  | inr hDisj =>
+      -- Disjoint case - just unfold OrbitFamily on mk's
+      simpa [OrbitFamily] using hDisj
+
+  | inl hEq =>
+      -- Equal-orbit case - contradict hij by proving ⟦a⟧ = ⟦b⟧
+      exfalso
+      apply hij
+      apply Quotient.sound
+
+      -- From hEq we have b ∈ orbit G a
+      have hb : b ∈ orbit G a := by
+        -- b ∈ orbit G b always
+        have : b ∈ orbit G b := mem_orbit_self b
+        -- transport along equality of orbits
+        simpa [hEq] using this
+
+      rcases (mem_orbit_iff.mp hb) with ⟨g, hg⟩
+      refine ⟨g⁻¹, ?_⟩
+
+      --Invert the action equation
+      have : g⁻¹ • b = a := by
+        have h1 := congrArg (fun t => g⁻¹ • t) hg
+        have h2 : a = g⁻¹ • b := by
+          simpa [inv_smul_smul] using h1
+        exact h2.symm
+      exact this
+
 
 variable {α : Type*} (I : Finset α) (p : ℕ) (Prime p)
 --says p divides the order of each set in the sum indezed over range n
