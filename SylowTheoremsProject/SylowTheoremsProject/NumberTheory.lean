@@ -100,6 +100,7 @@ theorem binomial_prime_pow_mul {p n m : ℕ} (hp : p.Prime) :
   simp at binomial_equality
   exact binomial_equality
 
+-- proof that if m and p are coprime, then m is nonzero
 theorem m_coprime_nonzero_mod_p (m p : ℕ) (hp : p.Prime) (h : Nat.Coprime m p) :
     (m ≠ (0 : ZMod p)) := by
 
@@ -111,6 +112,7 @@ theorem m_coprime_nonzero_mod_p (m p : ℕ) (hp : p.Prime) (h : Nat.Coprime m p)
   have : (p ≠ 1) := Nat.Prime.ne_one hp
   contradiction
 
+-- define X as the set of all subsets of group G with cardinality p^n
 def Xsubsets (G : Type*) [Group G] [Fintype G] (p n : ℕ) : Finset (Finset G) :=
   Finset.powersetCard (p^n) Finset.univ
 
@@ -121,15 +123,27 @@ theorem Xsubsets_card (G : Type*) [Group G] [Fintype G] (p n m : ℕ)
 
   rw [Xsubsets, Finset.card_powersetCard, Finset.card_univ, hcard]
 
+-- prove that the size of Xsubsets is m mod p
+theorem Xsubsets_card_mod (G : Type*) [Group G] [Fintype G] (p n m : ℕ)
+                          (hp : p.Prime)
+                          (hcard : Fintype.card G = p ^ n * m) :
+    (Xsubsets G p n).card = (m : ZMod p) := by
+
+    rw [@Xsubsets_card G _ _ p n m]
+    · rw [@binomial_prime_pow_mul p n m hp]
+    exact hcard
+
 -- prove that p does not divide the cardinality of Xsubsets
 theorem p_not_dvd_card_Xsubsets (G : Type*) [Group G] [Fintype G] (p n m : ℕ)
                                 (hp : p.Prime) (hcoprime : Nat.Coprime m p)
                                 (hcard : Fintype.card G = p ^ n * m) :
     ¬(p ∣ (Xsubsets G p n).card) := by
 
-  rw [Xsubsets_card G p n m hcard, ← ZMod.natCast_eq_zero_iff, binomial_prime_pow_mul]
-  · exact m_coprime_nonzero_mod_p m p hp hcoprime
-  exact hp
+  intro h
+  rw [← ZMod.natCast_eq_zero_iff] at h
+  rw [Xsubsets_card_mod G p n m hp hcard] at h
+  have m_nonzero := @m_coprime_nonzero_mod_p m p hp hcoprime
+  contradiction
 
 ------------------------------------------------------------------------------------
 
@@ -158,8 +172,5 @@ theorem zmodp_coprime_inverse (m p : ℕ) (b : ZMod p) (hp : p.Prime) (h : Nat.C
   have h_inv : m_inv * (m : ZMod p) = 1 := by
     exact inv_mul_cancel₀ h_m_neq_zero
 
-  rw [h_inv] at inv_eq
-
-  rw [one_mul] at inv_eq
-
+  rw [h_inv, one_mul] at inv_eq
   exact inv_eq
