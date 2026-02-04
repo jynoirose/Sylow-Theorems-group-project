@@ -1,6 +1,6 @@
-import SylowTheromsProject.OribitStabiliser
-import SylowTheromsProject.Claim1
-import SylowTheromsProject.NumberTheory
+import SylowTheoremsProject.OribitStabiliser
+import SylowTheoremsProject.Claim1
+import SylowTheoremsProject.NumberTheory
 
 open MulAction
 
@@ -36,7 +36,7 @@ theorem card_X_modeq_sum {G : Type*} [Group G] [Fintype G]
     binomial_prime_pow_mul hp.out
 
   rw [h1, h2]
-  
+
   exact h3
 
 -- We want to prove conclusion 36 with claim 1
