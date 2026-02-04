@@ -23,7 +23,7 @@ There are theorem names and comments throughout our code that may reference numb
 ### Independent sub-projects
 
 The following files contain **preliminary definitions and intermediate results** required for the formalisation of the Sylow Theorems. Each corresponds to some section of the proof from MA3K4.
-They serve as foundational material and are reused throughout the project. We divided tasks between us so we could work in parallel on different parts of the project.
+They serve as foundational material and are reused throughout the project, they can be found the Subprojects directory. We divided tasks between us so we could work in parallel on different parts of the project.
 
 - `Bijectivity Statements.lean`  
 - `Lagrange.lean`  
