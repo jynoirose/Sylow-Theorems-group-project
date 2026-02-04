@@ -1908,11 +1908,43 @@ lemma syl_bij_notdivset  [Fintype (X' G p n)]
   Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) = Nat.card (Syl_p G p) := by sorry
 
 --claim 38
-/-Each orbit has size m, so sum is in fact congruent to m * |Syl p G|-/
 lemma sum_substituted_modp [Fintype (X' G p n)]
-  [Fintype (OrbitIndex G (X' G p n))] :
+  [Fintype (OrbitIndex G (X' G p n))]
+  {m : ℕ} (hp : p.Prime)
+  (hG : Fintype.card G = p ^ n * m) :
   (Fintype.card (X' G p n) : ZMod p)
-    = ((Fintype.card G) / p^n) * Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) := by sorry
+    = (Fintype.card G / p^n : ℕ) * Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) := by
+  
+  have hdiv : Fintype.card G / p^n = m := by
+    rw [hG]; exact Nat.mul_div_cancel_left m (pow_pos hp.pos n)
+  
+  rw [X_sum_mod_p]
+  
+  have hsize : ∀ (i : (notdivset_Si : Set (OrbitIndex G (X' G p n)))),
+      Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i.val)) = (Fintype.card G) / p^n := by
+    intro i
+    have ⟨H, hH⟩ : ∃ H : Subgroup G, (H : Set G) = (S_i i.val).val := sorry
+    exact orbit_size_eq (S_i i.val) hp H hH
+  
+  have hsum_eq : (∑ᶠ (i : (notdivset_Si : Set (OrbitIndex G ↑(X' G p n)))),
+      Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i))) = 
+    (∑ᶠ (i : (notdivset_Si : Set (OrbitIndex G ↑(X' G p n)))),
+      (Fintype.card G / p^n : ℕ)) := by
+    congr 1; ext i; exact hsize i
+  
+  rw [hsum_eq]
+  
+  have hsum_nat : (∑ᶠ (i : (notdivset_Si : Set (OrbitIndex G ↑(X' G p n)))),
+        (Fintype.card G / p^n : ℕ)) = 
+      Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) * (Fintype.card G / p^n) := by
+    classical
+    rw [finsum_eq_sum_of_fintype]
+    rw [Finset.sum_const]
+    rw [nsmul_eq_mul, Finset.card_univ]
+    congr 1
+    exact Nat.card_eq_fintype_card.symm
+  
+  rw [hsum_nat, Nat.cast_mul, hdiv, mul_comm]
 
 
 /-For claim 39, need to premultiply by inverse of m mod p. First show this inverse exists-/
