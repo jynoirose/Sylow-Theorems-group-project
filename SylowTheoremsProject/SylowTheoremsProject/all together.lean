@@ -1992,10 +1992,13 @@ theorem zmodp_coprime_inverse (m p : ℕ) (b : ZMod p) (hp : p.Prime) (h : Nat.C
 lemma syl_congr_1 {G : Type*} [Group G] [Fintype G]
     {p n m : ℕ} [hp : Fact p.Prime] [Fintype (X' G p n)]
   [Fintype (OrbitIndex G (X' G p n))] (hG : Fintype.card G = p ^ n * m)
-    (hm : Nat.Coprime m p)
+    (hm : Nat.Coprime m p) (hp : p.Prime)
   : (Nat.card (X' G p n) : ZMod p)
     = Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) * ↑((Fintype.card G) / p^n) := by
-  rw [sum_substituted_modp, mul_comm]
+
+  rw [Nat.card_eq_fintype_card]
+  rw [@sum_substituted_modp G _ _ p n _ _ _ m hp hG, mul_comm]
+
 
 
 theorem syl_eq_1_mod_p {G : Type*} [Group G] [Fintype G]
@@ -2006,7 +2009,8 @@ theorem syl_eq_1_mod_p {G : Type*} [Group G] [Fintype G]
 
   have mod_eq : (Nat.card (X' G p n) : ZMod p)
     = ↑((Fintype.card G) / p^n) * Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) := by
-      exact sum_substituted_modp
+      rw [Nat.card_eq_fintype_card]
+      rw [@sum_substituted_modp G _ _ p n _ _ _ m hp hG]
 
   rw [@card_X_eq_card_Xsubsets G _ _ p n] at mod_eq
   rw [@Xsubsets_card_mod G _ _ p n m hp hG] at mod_eq
