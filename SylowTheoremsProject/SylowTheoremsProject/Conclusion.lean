@@ -1,4 +1,4 @@
-import SylowTheoremsProject.OribitStabiliser
+import SylowTheoremsProject.OrbitStabiliser
 import SylowTheoremsProject.Claim1
 import SylowTheoremsProject.NumberTheory
 

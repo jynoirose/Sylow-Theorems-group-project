@@ -1,6 +1,6 @@
 --skeleton 9 & 10
 import SylowTheoremsProject.Imports
-import SylowTheoremsProject.OrbitStabilizer
+import SylowTheoremsProject.OrbitStabiliser
 import SylowTheoremsProject.Claim1
 
 --open Set

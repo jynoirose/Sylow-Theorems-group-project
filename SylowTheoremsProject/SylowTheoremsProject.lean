@@ -1,12 +1,12 @@
 import SylowTheoremsProject.Imports
-import SylowTheoremsProject.Skeleton_9&10
+-- import SylowTheoremsProject.Skeleton_9&10
 import SylowTheoremsProject.Lagrange
-import SylowTheoremsProject.claim_2_orb_2
+-- import SylowTheoremsProject.claim_2_orb_2
 import SylowTheoremsProject.NumberTheory
-import SylowTheoremsProject.OrbitStabilizer
+import SylowTheoremsProject.OribitStabiliser
 import SylowTheoremsProject.Conclusion
 import SylowTheoremsProject.Claim1
-import SylowTheoremsProject.Bijectivity Statements
+-- import SylowTheoremsProject.Bijectivity Statements
 
 def isPSubgroup {G : Type _} [Group G] [Fintype G] (p : ℕ)
     (H : Subgroup G) : Prop :=
