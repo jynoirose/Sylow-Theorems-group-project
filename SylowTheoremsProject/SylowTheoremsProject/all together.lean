@@ -1,10 +1,8 @@
-import Mathlib.GroupTheory.Sylow -- test
-import Mathlib.Data.Nat.Prime.Basic  -- test
-import Mathlib.Data.Nat.Choose.Basic  -- test
-import Mathlib.Data.Nat.Choose.Dvd  -- test
-import Mathlib.Data.Nat.Basic
--- import Mathlib.NumberTheory.ZMod
-import Mathlib.Tactic -- reduce these imports later
+import Mathlib.GroupTheory.Sylow
+
+import Mathlib.Data.Nat.Choose.Dvd
+import Mathlib.Algebra.Polynomial.Expand
+import Mathlib.Algebra.Field.ZMod
 
 import Mathlib.Algebra.Group.Subgroup.Basic
 import Mathlib.Data.Fintype.Basic
@@ -35,7 +33,7 @@ import Mathlib.GroupTheory.Coset.Basic
 ----------------------------------------------------------------------------
 open ZMod
 
--- rewrite to make follow proof from notes rather than using mathlib?
+-- from mathlib, p | p.choose i for 0 < i < p, p prime
 theorem binomial_prime_mul {p i : ℕ} (hp : p.Prime) (hip : 0 < i ∧ i < p) : p ∣ (p.choose i) := by
 
   exact hp.dvd_choose_self hip.1.ne' hip.2

@@ -1,13 +1,21 @@
--- def hello := "world"
+-- import Mathlib.Data.Nat.Prime.Basic
+-- import Mathlib.Data.Nat.Choose.Basic
+-- import Mathlib.Data.Nat.Choose.Sum
+-- import Mathlib.Data.Nat.Basic
+-- import Mathlib.Data.ZMod.Basic
+-- import Mathlib.Algebra.Polynomial.Basic
+-- import Mathlib.Algebra.Polynomial.Eval.Defs
+-- import Mathlib.Algebra.Polynomial.Coeff
+-- import Mathlib.Data.Finset.Basic
+-- import Mathlib.Data.Fintype.Basic
+-- import Mathlib.Data.Fintype.Card
+-- import Mathlib.Data.List.Basic
+-- import Mathlib.Algebra.Group.Defs
 
-import Mathlib.GroupTheory.Sylow -- test
-import Mathlib.Data.Nat.Prime.Basic  -- test
-import Mathlib.Data.Nat.Choose.Basic  -- test
-import Mathlib.Data.Nat.Choose.Dvd  -- test
-import Mathlib.Data.Nat.Basic
--- import Mathlib.NumberTheory.ZMod
-import Mathlib.Tactic -- reduce these imports later
-
+-- Works with only these imports. Try uncommenting the above if otherwise fails.
+import Mathlib.Data.Nat.Choose.Dvd
+import Mathlib.Algebra.Polynomial.Expand
+import Mathlib.Algebra.Field.ZMod
 
 
 open ZMod
