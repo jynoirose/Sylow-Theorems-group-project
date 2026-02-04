@@ -1123,7 +1123,9 @@ def orb_choice {G I : Type*} [Group G] {p n : ℕ} [Fintype G] [Fintype I] [Deci
  (V : I → X' G p n) (i : notdivset_orb V) := V i
 
 
-/-We want every member of X' G p n to be Vi for some i. This is sorry'd out as redefining the Vi's as a surjective function required excessive reworking of existing code-/
+/-We want every member of X' G p n to be Vi for some i.
+This is sorry'd out as redefining the Vi's as a surjective function
+required excessive reworking of existing code-/
 lemma v_is_surj {G I : Type*} [Group G] {p n : ℕ}
  [Fintype G] [Fintype I] [DecidableEq (X' G p n)] (J : {P : Subgroup G // Nat.card P = p^n})
  (V : I → X' G p n) : ∃ (i : I), J = (V i).val := by
@@ -1434,10 +1436,15 @@ lemma claim24_pt1 {G I : Type*} [Group G] {p n m : ℕ}
 
 /-currently, the function V has image in X G p n, i.e. subsets of size
 p^n. We want to consider _subgroups_ of size p^n. So we want every Vi to be
-considered as a member of X' G p n in order to use the group action, which is defined on X' G p n, but also considered a subgroup in order to use subgroup properties like (1 : G) ∈ P etc
+considered as a member of X' G p n in order to use the group action,
+which is defined on X' G p n, but also considered a subgroup in order to use subgroup properties
+like (1 : G) ∈ P etc
 
 
-This lemma matches each subset Vi with a subgroup Wi. When we need the subgroup properties, we switch to using the Wi, and when we need properties of the group action, we switch back to Vi. It is sorry'd out as it is not group theory, and finding an alternative way to switch between subgroup and subset proved difficult and time consuming-/
+This lemma matches each subset Vi with a subgroup Wi. When we need the subgroup properties,
+we switch to using the Wi, and when we need properties of the group action, we switch back to Vi.
+It is sorry'd out as it is not group theory, and finding an alternative way to switch between
+subgroup and subset proved difficult and time consuming-/
 lemma Wi_is_Vi {G I : Type*} [Group G] {p n : ℕ} [Fintype G] [Fintype I] [DecidableEq (X' G p n)]
  (V : I → X' G p n) (W : notdivset_orb V → Subgroup G) :
  ∀ (i : notdivset_orb V), W i = (V i).val := sorry
@@ -1447,7 +1454,8 @@ lemma Wi_is_Vi {G I : Type*} [Group G] {p n : ℕ} [Fintype G] [Fintype I] [Deci
  of G. This is equivalent to being a Sylow p subgroup-/
 
 
- /-Now show if two sylow p subgroups have the same orbit, they are in fact the same subgroup. This is claims 24-31-/
+ /-Now show if two sylow p subgroups have the same orbit, they are in fact the same subgroup.
+ This is claims 24-31-/
 
 
  lemma same_orb_same_grp {G I : Type*} [Group G] {p n : ℕ}
@@ -1643,10 +1651,11 @@ variable {p n : ℕ} [Fact p.Prime]
 
 -- Since we defined the set X in different way in the number theory section to the claim 1 section,
 -- we need to link them first
+-- This is sorry'd because the type issue would take too long to fix, and we have ran out of time.
 lemma card_X_eq_card_Xsubsets {G : Type*} [Group G] [Fintype G] {p n : ℕ} :
     Nat.card (X' G p n) = (Xsubsets G p n).card := by
-  -- X G p n = {S : Set G | Nat.card S = p ^ n}
-  -- Xsubsets G p n = Finset.powersetCard (p^n) Finset.univ
+  -- X G p n = {S : Set G | Nat.card S = p ^ n} : Set (Set G)
+  -- Xsubsets G p n = Finset.powersetCard (p^n) Finset.univ : Finset (Finset G)
   sorry
 
 
@@ -1768,7 +1777,8 @@ theorem X_sum_orbits
           (S_i (G := G) (p := p) (n := n) i)
 
 
-      -- This comes down to a ncard vs fintype.card issue that cannot be easily solved, but ran out of time to sort it
+      -- This comes down to a ncard vs fintype.card issue that cannot be easily solved,
+      -- but ran out of time to sort it, so sorry'd
       have :
           (orbit G (S_i (G := G) (p := p) (n := n) i)).ncard
             =
@@ -1784,30 +1794,35 @@ theorem X_sum_orbits
 
 
 /-define the set of indices whose corresponding sets have orbits that are divisible by p-/
-def divset_Si [Fintype (X' G p n)] [Fintype (OrbitIndex G (X' G p n))] : Set (OrbitIndex G (X' G p n)) :=
+def divset_Si [Fintype (X' G p n)] [Fintype (OrbitIndex G (X' G p n))] :
+Set (OrbitIndex G (X' G p n)) :=
 {(i : OrbitIndex G (X' G p n)) | p ∣ Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i))}
 
 
-def notdivset_Si [Fintype (X' G p n)] [Fintype (OrbitIndex G (X' G p n))] : Set (OrbitIndex G (X' G p n)) :=
+def notdivset_Si [Fintype (X' G p n)] [Fintype (OrbitIndex G (X' G p n))] :
+Set (OrbitIndex G (X' G p n)) :=
 {(i : OrbitIndex G (X' G p n)) | ¬ (p ∣ Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i)))}
 
 
-/-Show every i in I is either in notdivset_Si or divset_Si-/
- lemma div_paritions_I [Fintype (X' G p n)] [Fintype (OrbitIndex G (X' G p n))] :
+/-Show every i in I is either in notdivset_Si or divset_Si
+Sorry'd because it's time consuming and not group theory.-/
+lemma div_paritions_I [Fintype (X' G p n)] [Fintype (OrbitIndex G (X' G p n))] :
  ∀ (i : OrbitIndex G (X' G p n)), i ∈ (notdivset_Si) ∪ (divset_Si) := by
   intro k
   unfold notdivset_Si
   unfold divset_Si
   sorry
 
- /-Show the sum can be split into a sum over notdivset and divset-/
+ /-Show the sum can be split into a sum over notdivset and divset
+Sorry'd because it's time consuming and not group theory.-/
 theorem X_sum_by_div
   [Fintype (X' G p n)]
   [Fintype (OrbitIndex G (X' G p n))] :
   Fintype.card (X' G p n)
     =
   (∑ᶠ (i : (notdivset_Si : Set (OrbitIndex G ↑(X' G p n)))),
-      Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i))) +   (∑ᶠ (i : (divset_Si : Set (OrbitIndex G ↑(X' G p n)))),
+      Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i))) +
+      (∑ᶠ (i : (divset_Si : Set (OrbitIndex G ↑(X' G p n)))),
       Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i))):= by
         sorry
 
@@ -1902,7 +1917,7 @@ theorem orbit_size_eq {G : Type*} [Group G] [Fintype G] {p n : ℕ}
   rw [h_stab] at h1
   exact h1.symm
 
-/-step 37: the final statement of claim2 we were aiming for but sadly didn't reach-/
+/-step 37: the final statement of claim2 we were aiming for but sadly didn't reach, so sorry'd-/
 lemma syl_bij_notdivset  [Fintype (X' G p n)]
   [Fintype (OrbitIndex G (X' G p n))] :
   Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) = Nat.card (Syl_p G p) := by sorry
@@ -1923,6 +1938,7 @@ lemma sum_substituted_modp [Fintype (X' G p n)]
   have hsize : ∀ (i : (notdivset_Si : Set (OrbitIndex G (X' G p n)))),
       Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i.val)) = (Fintype.card G) / p^n := by
     intro i
+    -- This conclusion should have been in claim 2 but we didn't reach it.
     have ⟨H, hH⟩ : ∃ H : Subgroup G, (H : Set G) = (S_i i.val).val := sorry
     have h_eq := orbit_size_eq (S_i i.val) H hH
     symm
