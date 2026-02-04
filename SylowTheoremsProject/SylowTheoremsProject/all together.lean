@@ -2016,8 +2016,7 @@ lemma syl_congr_1 {G : Type*} [Group G] [Fintype G]
   rw [@sum_substituted_modp G _ _ p n _ _ _ m hp hG, mul_comm]
 
 
-
-theorem syl_eq_1_mod_p {G : Type*} [Group G] [Fintype G]
+theorem sylow_4 {G : Type*} [Group G] [Fintype G]
     {p n m : ℕ} [hp : Fact p.Prime] [Fintype (X' G p n)]
   [Fintype (OrbitIndex G (X' G p n))] (hG : Fintype.card G = p ^ n * m)
     (hm : Nat.Coprime m p) (hp : p.Prime)
@@ -2042,3 +2041,22 @@ theorem syl_eq_1_mod_p {G : Type*} [Group G] [Fintype G]
 
   symm
   exact mod_eq
+
+theorem sylow_1 {G : Type*} [Group G] [Fintype G]
+    {p n m : ℕ} [hp : Fact p.Prime] [Fintype (X' G p n)]
+  [Fintype (OrbitIndex G (X' G p n))] (hG : Fintype.card G = p ^ n * m)
+    (hm : Nat.Coprime m p) (hp : p.Prime)
+  : Nat.card (Syl_p G p) ≥ 1 := by
+
+  have s4 := sylow_4 hG hm hp
+
+  by_contra! h
+  have card_eq_zero : Nat.card (Syl_p G p) = 0 := by
+    exact Nat.lt_one_iff.mp h
+
+  rw [card_eq_zero] at s4
+  rw [Nat.cast_zero] at s4
+  symm at s4
+  rw [ZMod.one_eq_zero_iff] at s4
+  have : p ≠ 1 := hp.ne_one
+  contradiction
