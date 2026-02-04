@@ -1924,7 +1924,11 @@ lemma sum_substituted_modp [Fintype (X' G p n)]
       Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i.val)) = (Fintype.card G) / p^n := by
     intro i
     have ⟨H, hH⟩ : ∃ H : Subgroup G, (H : Set G) = (S_i i.val).val := sorry
-    exact orbit_size_eq (S_i i.val) hp H hH
+    have h_eq := orbit_size_eq (S_i i.val) H hH
+    symm
+    apply Nat.div_eq_of_eq_mul_right
+    · exact pow_pos hp.pos n
+    · rw [mul_comm, h_eq]
 
   have hsum_eq : (∑ᶠ (i : (notdivset_Si : Set (OrbitIndex G ↑(X' G p n)))),
       Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i))) =
