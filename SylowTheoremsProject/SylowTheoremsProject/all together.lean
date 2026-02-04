@@ -760,7 +760,7 @@ variable {G : Type*} [Group G] [Fintype G]
 variable {p n : ℕ} [Fact p.Prime]
 
 
-/--Step 5 for every `S : X' G p n`, there exists `T` in the orbit of `S` such that `1 ∈ T`-/
+/-- Step 5 for every `S : X' G p n`, there exists `T` in the orbit of `S` such that `1 ∈ T` -/
 lemma step5_exists_one_mem_orbit (S : (X' G p n)) :
     ∃ T : (X' G p n), T ∈ orbit G S ∧ (1 : G) ∈ (T : Set G) := by
   classical
@@ -795,12 +795,11 @@ lemma step5_exists_one_mem_orbit (S : (X' G p n)) :
   let g : G := (s : G)⁻¹
   refine ⟨g • S, ?_, ?_⟩
   · exact ⟨g, rfl⟩
-  ·
-    refine ⟨(s : G), s.property, ?_⟩
+  · refine ⟨(s : G), s.property, ?_⟩
     simp [g]
 
 
-/--Step 6-/
+/-- Step 6 -/
 lemma orbit_eq_of_mem
   {G X' : Type*} [Group G] [MulAction G X']
   {S T : X'} (h : T ∈ orbit G S) :
@@ -882,7 +881,7 @@ lemma OrbitFamily_surjective
     rfl
 
 
-/--Distinct orbit indices give disjoint orbits --/
+/- Distinct orbit indices give disjoint orbits -/
 lemma OrbitFamily_pairwise_disjoint
   {G X' : Type*} [Group G] [MulAction G X'] :
   Pairwise (fun i j =>
@@ -919,7 +918,7 @@ lemma OrbitFamily_pairwise_disjoint
         -- b ∈ orbit G b always
         have : b ∈ orbit G b := mem_orbit_self b
         -- transport along equality of orbits
-        simpa [hEq] using this
+        simp [hEq]
 
 
       rcases (mem_orbit_iff.mp hb) with ⟨g, hg⟩
@@ -971,7 +970,7 @@ noncomputable def S_i
 
 
 
-/-- Si lies in the orbit indexed by i-/
+/-- Si lies in the orbit indexed by i -/
 lemma S_i_mem_OrbitFamily
   (i : OrbitIndex G (X' G p n)) :
     S_i (G := G) (p := p) (n := n) i
@@ -1018,7 +1017,7 @@ lemma iUnion_OrbitFamily_eq_univ :
   · intro _
     refine Set.mem_iUnion.mpr ?_
     refine ⟨Quotient.mk _ x, ?_⟩
-    simpa [OrbitFamily] using (mem_orbit_self (G := G) x)
+    simp [OrbitFamily]
 
 
 variable {G : Type*} [Group G] [Fintype G]
@@ -1044,7 +1043,8 @@ lemma OrbitFamily_eq_orbit_Si
       orbit G S :=
     orbit_eq_of_mem (G := G) (X' := X' G p n) hmem
   -- OrbitFamily ⟦S⟧ = orbit G S
-  simpa [OrbitFamily, horb] using horb.symm
+  simp [OrbitFamily, horb]
+
 ------------------------------------------------------------------------------
 /-BIJECTIVITY STATEMENTS, steps 9 & 10-/
 --------------------------------------------------------------------------------
@@ -1077,8 +1077,7 @@ lemma not_div_sum {U : Type u} {I : Type v} [Fintype I]
   contrapose
   simp
   intro hx
-  ·
-    have h₃ : ∑ᶠ (i : I), Fintype.card (V i) = ∑ᶠ (i : I), icard i hV := by
+  · have h₃ : ∑ᶠ (i : I), Fintype.card (V i) = ∑ᶠ (i : I), icard i hV := by
      unfold icard
      trivial
     have h₄ : ∀ (i : I), p ∣ icard i hV := by
@@ -1091,7 +1090,8 @@ lemma not_div_sum {U : Type u} {I : Type v} [Fintype I]
 ------------------------------------------------------------------------------
 /-CLAIM 2, steps 18-33
 The first step of this section is to define a function from {Orbit G Si ∣ p ∤ |Orbit G Si|} to Si.
-Unfortunately we ran out of time to define this function correctly (I tried to work around it, but the proof ultimately doesn't hold up.-/
+Unfortunately we ran out of time to define this function correctly
+(I tried to work around it, but the proof ultimately doesn't hold up.-/
 ------------------------------------------------------------------------------
 --define the set of indices whose corresponding sets have orbits not divisible by p
 def notdivset_orb {G I : Type*} [Group G] {p n : ℕ}
@@ -1210,7 +1210,8 @@ lemma leftCoset_eq_of_mem {H : Subgroup G} {g k : G}
     simpa [leftCoset, mul_assoc] using hx'
 
 
---This is a modfiedied version of Lemma 1.15 in the MA3K4 lecture notes and used to prove step 22 in claim 2
+--This is a modified version of Lemma 1.15 in the MA3K4 lecture notes
+--and used to prove step 22 in claim 2
 theorem Eq_of_cosets {H : Subgroup G} {g k : G} :
   k ∈ leftCoset H g ↔ leftCoset H g = leftCoset H k := by
   constructor
@@ -1230,8 +1231,10 @@ theorem Eq_of_cosets {H : Subgroup G} {g k : G} :
     simpa [hEq] using hk
 
 
-/-This lemma states that if a subgroup H is equal to the orbit of an element V i, then the stabilizer of V i is equal to H
-The proof follows the notes in principal which uses Lemma 1.15 above, but due to type issues most of the proof is exchanging between H and (V i).val-/
+/-This lemma states that if a subgroup H is equal to the orbit of an element V i,
+then the stabilizer of V i is equal to H
+The proof follows the notes in principal which uses Lemma 1.15 above,
+but due to type issues most of the proof is exchanging between H and (V i).val-/
 lemma claim22 {G I : Type*} [Group G] {p n : ℕ}
  [Fintype G] [Fintype I] [DecidableEq (X' G p n)] (V : I → X' G p n) (i : I)
  (H : Subgroup G) (hgrp : H = (V i).val)
@@ -1239,7 +1242,8 @@ lemma claim22 {G I : Type*} [Group G] {p n : ℕ}
   classical
 
 
-  -- First helper - left-multiplying every element of H by g gives exactly the left coset {x | g⁻¹ * x ∈ H}
+  -- First helper - left-multiplying every element of H by g gives exactly
+  -- the left coset {x | g⁻¹ * x ∈ H}
   have image_eq_leftCoset (H : Subgroup G) (g : G) :
       (fun s : G => g * s) '' (H : Set G) = leftCoset H g := by
     ext x
@@ -1250,7 +1254,7 @@ lemma claim22 {G I : Type*} [Group G] {p n : ℕ}
     · intro hx
       -- if g⁻¹*x ∈ H, just set s = g⁻¹*x so that x = g*s
       refine ⟨g⁻¹ * x, hx, ?_⟩
-      simp [mul_assoc]
+      simp
 
 
   -- Second helper - the coset with 1 is just H itself
@@ -1363,8 +1367,8 @@ lemma claim23 {G I : Type*} [Group G] {p n m : ℕ} [Fintype G] [Fintype I]
     (hP : Fintype (V i))
     (hm : p.Coprime m)
     (H : Subgroup G) (hgrp : H = (V i).val)
-    (P_order : Fintype.card (V i).val = p^n)
-    (G_order : Fintype.card G = m * p^n)
+    (P_order : Fintype.card (V i).val = p ^ n)
+    (G_order : Fintype.card G = m * p ^ n)
     (hPrime : Nat.Prime p) : ¬ (p ∣ Fintype.card (orbit G (V i))) := by
     have h00 : stabilizer G (V i) = (V i).val := by
       apply claim22 V i H hgrp
@@ -1388,11 +1392,9 @@ lemma claim23 {G I : Type*} [Group G] {p n m : ℕ} [Fintype G] [Fintype I]
       apply h₁
     have h₄ : m = m * p^n / p^n := by
      refine Nat.eq_div_of_mul_eq_right ?_ ?_
-     ·
-      refine pow_ne_zero n ?_
+     ·refine pow_ne_zero n ?_
       exact Nat.Prime.ne_zero hPrime
-     ·
-      exact Nat.mul_comm (p ^ n) m
+     ·exact Nat.mul_comm (p ^ n) m
     have h₅ : Fintype.card (orbit G (V i)) = m := by
       rw [h₄]
       exact h₃
@@ -1458,7 +1460,7 @@ lemma Wi_is_Vi {G I : Type*} [Group G] {p n : ℕ} [Fintype G] [Fintype I] [Deci
  This is claims 24-31-/
 
 
- lemma same_orb_same_grp {G I : Type*} [Group G] {p n : ℕ}
+lemma same_orb_same_grp {G I : Type*} [Group G] {p n : ℕ}
 [Fintype G] [Fintype I] [DecidableEq (X' G p n)]
  (V : I → X' G p n) (W : notdivset_orb V → Subgroup G) :
     ∀ (i j : notdivset_orb V), orbit G (V i) = orbit G (V j) → V i = V j := by
@@ -1551,21 +1553,24 @@ lemma Wi_is_Vi {G I : Type*} [Group G] {p n : ℕ} [Fintype G] [Fintype I] [Deci
 
 /-So we have that a sylow P subgroup is Vi for some i ∈ notdivset_orb V,
 if two sylow P subgroups have the same orbit under left mult by G then they
-are the same subgroup. Define a function f from notdivset that takes an index to its corresponding subgroup-/
+are the same subgroup. Define a function f from notdivset that takes an index
+to its corresponding subgroup-/
 
 
-/- This is where I tried to work around defining the function from {Orbit G Si ∣ p ∤ |Orbit G Si|} to Si by instead
-defining a function from the notdivset, i.e. the set of all indices whose corresponding orbits are not divisible
-by p. The flaw is that there is no uniqueness; in the proof, we rely on the fact the Si have distinct orbits, but the
-function defined below could have Orbit(Vi) = (Orbit Vj). This also means the function is not a bijection, as we need
-to'quotient' out by orbits that are equal. And the bijectivity is the very thing we need.-/
+/- This is where I tried to work around defining the function from {Orbit G Si ∣ p ∤ |Orbit G Si|}
+to Si by instead defining a function from the notdivset, i.e. the set of all indices
+whose corresponding orbits are not divisible by p. The flaw is that there is no uniqueness;
+in the proof, we rely on the fact the Si have distinct orbits, but the
+function defined below could have Orbit(Vi) = (Orbit Vj). This also means the function
+is not a bijection, as we need to'quotient' out by orbits that are equal. And the bijectivity
+is the very thing we need.-/
 
 def select_orb {G I : Type*} [Group G] {p n : ℕ} [Fintype G] [Fintype I]
  [DecidableEq (X' G p n)] (V : I → X' G p n) (j : notdivset_orb V) : X' G p n := orb_choice V j
 
 
 /-need to show this function is well defined. If orbit Vi = orbit Vj then Vi = Vj-/
- lemma select_welldefined {G I : Type*} [Group G] {p n : ℕ}
+lemma select_welldefined {G I : Type*} [Group G] {p n : ℕ}
  [Fintype G] [Fintype I] [DecidableEq (X' G p n)] (V : I → X' G p n)
   {U : I → Set ↑(X' G p n)} (huv : ∀ (i : I), U i = orbit G (V i))
   (W : notdivset_orb V → Subgroup G) :
@@ -1597,12 +1602,15 @@ def select_orb {G I : Type*} [Group G] {p n : ℕ} [Fintype G] [Fintype I]
 
 /-The final statement of claim 2 is written in the conclusion as step 37-/
 
- -----------------------------------------------------------------------------------------------------------------------------------
- /-BIJECTIVITY STATEMENTS: IF THERE'S A BIJECTION BETWEEN FINITE SETS THEN THE SETS HAVE THE SAME CARDINALITY-/
- -----------------------------------------------------------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------------
+ /-BIJECTIVITY STATEMENTS:
+   IF THERE'S A BIJECTION BETWEEN FINITE SETS THEN THE SETS HAVE THE SAME CARDINALITY-/
+ --------------------------------------------------------------------------------------
 
 
-/-in order to show |notdivset_orb V| = |Syl p G|, we show there is a bijection between them, which will hopefully be whatever version of select we write tomorrow using the Si Reece defines. First define injection, surjection and bijection -/
+/-in order to show |notdivset_orb V| = |Syl p G|, we show there is a bijection between them,
+which will hopefully be whatever version of select we write tomorrow using the Si Reece defines.
+First define injection, surjection and bijection -/
 def inj (X Y : Type*) (f : X → Y) := ∀ (x : X) , ∀ (y : X) , f x = f y → x = y
 def surj (X Y : Type*) (f : X → Y) := ∀ (y : Y) , ∃ (x : X) , f x = y
 def bij (X Y : Type*) (f : X → Y) := inj X Y f  ∧ surj X Y f
@@ -1637,9 +1645,9 @@ theorem bij_card {G H : Type*} [Fintype G] [Fintype H]
   · apply surj_card f right
 
 
--------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------
 /-CONCLUSION-/
---------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------
 
 
  /-we aim to show |notdivset_orb V| = |Syl p G|-/
@@ -1667,8 +1675,7 @@ lemma nat_cast_zmod_eq_iff_modeq {a b p : ℕ} [Fact p.Prime] :
 -- prove the conclusion 34：|X| = m (mod p)
 theorem card_X_modeq_sum {G : Type*} [Group G] [Fintype G]
     {p n m : ℕ} [hp : Fact p.Prime]
-    (hG : Fintype.card G = p ^ n * m)
-    (hm : Nat.Coprime m p) :
+    (hG : Fintype.card G = p ^ n * m) :
     Nat.card (X' G p n) = (m : ZMod p) := by
 
 
@@ -1691,7 +1698,7 @@ theorem card_X_modeq_sum {G : Type*} [Group G] [Fintype G]
   exact h3
 
 
-/--step 35-/
+/-- step 35 -/
 /-Size of X is sum of size of orbits-/
 theorem X_sum_orbits
   [Fintype (X' G p n)]
@@ -1744,7 +1751,7 @@ theorem X_sum_orbits
           (orbit G (S_i (G := G) (p := p) (n := n) i)).ncard) := by
     refine finsum_congr ?_
     intro i
-    simpa [OrbitFamily_eq_orbit_Si (G := G) (p := p) (n := n) i]
+    simp [OrbitFamily_eq_orbit_Si (G := G) (p := p) (n := n) i]
 
 
   -- Final calculation:
@@ -1752,12 +1759,12 @@ theorem X_sum_orbits
   calc
     Fintype.card (X' G p n)
         = (Set.univ : Set (X' G p n)).ncard := by
-            simpa using (Set.ncard_univ (α := X' G p n)).symm
+            simp
     _   = ∑ᶠ i : OrbitIndex G (X' G p n),
             (OrbitFamily (G := G) (X' := X' G p n) i).ncard := hncard_univ
     _   = ∑ᶠ i : OrbitIndex G (X' G p n),
             (orbit G (S_i (G := G) (p := p) (n := n) i)).ncard := by
-            simpa [hncard_terms]
+            simp [hncard_terms]
     _   = ∑ᶠ i : OrbitIndex G (X' G p n),
           Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i)) := by
       classical
