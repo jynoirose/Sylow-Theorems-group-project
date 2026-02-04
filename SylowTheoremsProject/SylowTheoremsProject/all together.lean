@@ -1936,5 +1936,7 @@ lemma syl_congr_1 {G : Type*} [Group G] [Fintype G]
     {p n m : ℕ} [hp : Fact p.Prime] [Fintype (X' G p n)]
   [Fintype (OrbitIndex G (X' G p n))] (hG : Fintype.card G = p ^ n * m)
     (hm : Nat.Coprime m p)
-  (Fintype.card (X' G p n) : ZMod p)
-    = Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) * ((Fintype.card G) / p^n):= by sorry
+  : (Fintype.card (X' G p n) : ZMod p)
+    = Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) * ((Fintype.card G) / p^n) := by
+  rw [sum_substituted_modp]
+  ring
