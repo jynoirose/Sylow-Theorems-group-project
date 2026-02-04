@@ -9,7 +9,7 @@ Reference link:
 
 ---
 
-##Project Outline
+## Project Outline
 
 We divide the overall proof into several components to enable modular development and parallel work.  
 The full outline and plan of the project can be found here:  
