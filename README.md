@@ -30,7 +30,6 @@ They serve as foundational material and are reused throughout the project. We di
 - `NumberTheory.lean`  
 - `OrbitStabiliser.lean`
 - `Claim1.lean`  
-- `Claim 2 plus 9&10.lean`  
 - `claim 2_orb_2.lean`  
 - `claim24pt1&2.lean`  
 
