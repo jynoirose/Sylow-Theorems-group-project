@@ -177,49 +177,6 @@ theorem p_not_dvd_card_Xsubsets (G : Type*) [Group G] [Fintype G] (p n m : ℕ)
   contradiction
 
 ------------------------------------------------------------------------------
-/-BIJECTIVITY STATEMENTS, 9 & 10-/
-------------------------------------------------------------------------------
-open Fintype
-open Finset
-universe u v
-
-variable {α : Type*} (I : Finset α) (p : ℕ)
---says p divides the order of each set in the sum indezed over range n
-
-def icard {U : Type u} {I : Type v} [Fintype I]
-{V : I → Set U} (i : I) (hV : ∀ (i : I), Fintype (V i))
-: ℕ := Fintype.card (V i)
-
---skeleton (9)
-theorem card_union_disj {U : Type u} {I : Type v} [Fintype I]
-{V : I → Set U} (hV : ∀ (i : I), (V i).Finite)
-(hdisj : ∀ (k j : I), Disjoint (V k) (V j)) :
-(⋃ (i : I), V i).ncard = ∑ᶠ (i : I), (V i).ncard := by
-  have h₀ : Pairwise (Function.onFun Disjoint V) := by
-    exact fun ⦃i j⦄ a ↦ hdisj i j
-  apply Set.ncard_iUnion_of_finite hV h₀
-
---skeleton (10)
--- says if p ∤ Σ|Vᵢ| then p ∤ |Vᵢ| for some i
-lemma not_div_sum {U : Type u} {I : Type v} [Fintype I]
-{V : I → Set U} (hV : ∀ (i : I), Fintype (V i)) :
- ¬ (p ∣ ∑ᶠ (i : I), Fintype.card (V i))
- → ∃ (i : I), ¬ (p ∣ Fintype.card (V i)) := by
-  contrapose
-  simp
-  intro hx
-  ·
-    have h₃ : ∑ᶠ (i : I), Fintype.card (V i) = ∑ᶠ (i : I), icard i hV := by
-     unfold icard
-     trivial
-    have h₄ : ∀ (i : I), p ∣ icard i hV := by
-     unfold icard
-     apply hx
-    rw[h₃]
-    rw[finsum_eq_sum_of_fintype]
-    apply dvd_sum
-    exact fun i a ↦ hx i
-------------------------------------------------------------------------------
 /-ORBIT STABILISER-/
 ------------------------------------------------------------------------------
 open MulAction
@@ -669,6 +626,308 @@ theorem H_is_sylow {G : Type*} [Group G] [Fintype G] {p n : ℕ}
       exact Nat.dvd_trans h_pn1_dvd_pm h_pm_dvd_G
 
     exact h_pn1_not_dvd this -- This contradicts the hypothesis
+
+
+------------------------------------------------------------------------------
+/-BIJECTIVITY STATEMENTS, 9 & 10-/
+------------------------------------------------------------------------------
+open Fintype
+open Finset
+universe u v
+
+variable {G : Type*} [Group G] [Fintype G]
+variable {p n : ℕ} [Fact p.Prime]
+
+/--Step 5 for every `S : X G p n`, there exists `T` in the orbit of `S` such that `1 ∈ T`-/
+lemma step5_exists_one_mem_orbit (S : (X' G p n)) :
+    ∃ T : (X' G p n), T ∈ orbit G S ∧ (1 : G) ∈ (T : Set G) := by
+  classical
+
+  -- `S ∈ X' G p n` means `|S| = p^n`
+  have hNat : Nat.card ((S : Set G)) = p ^ n := by
+    simpa [X'] using (S.property)
+
+  -- Put a Fintype on the underlying set so we can use Fintype.card lemmas
+  letI : Fintype (↑(S : Set G)) := Fintype.ofFinite (↑(S : Set G))
+
+  -- Convert Nat.card to Fintype.card
+  have hcard : Fintype.card (↑(S : Set G)) = p ^ n := by
+    simpa [Nat.card_eq_fintype_card] using hNat
+
+  -- p is prime so p > 0
+  have hp0 : 0 < p := (Fact.out : Nat.Prime p).pos
+  -- so S has positive size and is nonempty
+  have hpos : 0 < Fintype.card (↑(S : Set G)) := by
+    simpa [hcard] using (pow_pos hp0 n)
+
+  -- choose s ∈ S
+  obtain ⟨s⟩ : Nonempty (↑(S : Set G)) := Fintype.card_pos_iff.1 hpos
+
+  -- Let g = s⁻¹, and set T = g • S; then 1 ∈ T because g*s = 1.
+  let g : G := (s : G)⁻¹
+  refine ⟨g • S, ?_, ?_⟩
+  · exact ⟨g, rfl⟩
+  ·
+    refine ⟨(s : G), s.property, ?_⟩
+    simp [g]
+
+/--Step 6-/
+lemma orbit_eq_of_mem
+  {G X' : Type*} [Group G] [MulAction G X']
+  {S T : X'} (h : T ∈ orbit G S) :
+  orbit G T = orbit G S := by
+  --Orbits are either equal or disjoint
+  have h' := orbit_disjoint_or_eq (G := G) (X' := X') T S
+  cases h' with
+  --They are equal and we are done
+  | inl hEq =>
+      exact hEq
+  --Or they are disjoint
+  | inr hDisj =>
+      -- Show T is in the orbit of T
+      have hTT : T ∈ orbit G T := by
+        exact ⟨(1 : G), by simp⟩
+      -- contradiction: T is in both disjoint orbits
+      have : False := (Set.disjoint_left.1 hDisj) hTT h
+      exact False.elim this
+
+/-- Step 7 The type of distinct orbits, i.e., the quotient of X by the orbit relation -/
+
+def OrbitIndex (G X' : Type*) [Group G] [MulAction G X'] :=
+  Quotient (MulAction.orbitRel G X')
+
+/-- The family of distinct orbits, indexed without repetition. -/
+def OrbitFamily
+  {G X' : Type*} [Group G] [MulAction G X'] :
+  OrbitIndex G X' → Set X' :=
+  Quotient.lift
+    (fun x : X' => orbit G x) -- representative orbit
+    (by
+      intro a b hab
+      -- `hab : ∃ g0, g0 • b = a`  (orbit relation)
+      rcases hab with ⟨g0, hg0⟩
+      ext x
+      constructor
+      ·  --Forward directionx - `x ∈ orbit G a → x ∈ orbit G b`
+        rintro ⟨g, rfl⟩
+        refine ⟨g * g0, ?_⟩
+        -- `(g * g0) • b = g • (g0 • b) = g • a`
+        simp [mul_smul, hg0]
+      · -- Backward direction - `x ∈ orbit G b → x ∈ orbit G a`
+        rintro ⟨g, rfl⟩
+        refine ⟨g * g0⁻¹, ?_⟩
+        -- rewrite `g0⁻¹•a = b` using hg0
+        have hb : g0⁻¹ • a = b := by
+          have h1 : g0⁻¹ • (g0 • b) = g0⁻¹ • a :=
+            congrArg (fun t => g0⁻¹ • t) hg0
+          -- simplify left side to b
+          -- `h1 : b = g0⁻¹ • a`, so symm gives `g0⁻¹ • a = b`
+          have : b = g0⁻¹ • a := by
+            simpa [inv_smul_smul] using h1
+          simpa using this.symm
+        -- now substitute hb
+        simp [mul_smul, hb])
+
+/-- Step 7 - range OrbitFamily = range orbit -/
+lemma OrbitFamily_surjective
+  {G X' : Type*} [Group G] [MulAction G X'] :
+  Set.range (OrbitFamily (G := G) (X' := X'))
+    = Set.range (orbit G : X' → Set X') := by
+  classical
+  ext A
+  constructor
+  -- OrbitFamily side → orbit side
+  · rintro ⟨i, rfl⟩
+    -- reduce quotient index to representative
+    refine Quotient.inductionOn i (fun x => ?_)
+    exact ⟨x, rfl⟩
+
+  -- Orbit side → OrbitFamily side
+  · rintro ⟨x, rfl⟩
+    refine ⟨Quotient.mk _ x, ?_⟩
+    rfl
+
+/--Distinct orbit indices give disjoint orbits --/
+lemma OrbitFamily_pairwise_disjoint
+  {G X' : Type*} [Group G] [MulAction G X'] :
+  Pairwise (fun i j =>
+    Disjoint (OrbitFamily (G := G) (X':= X') i)
+             (OrbitFamily (G := G) (X' := X') j)) := by
+  classical
+  intro i j hij
+  -- push inequality inside quotient induction
+  revert hij
+  refine Quotient.inductionOn₂ i j (fun a b => ?_)
+  intro hij
+  -- now hij : ⟦a⟧ ≠ ⟦b⟧
+
+  -- use orbit disjoint-or-equal lemma
+  have h := orbit_disjoint_or_eq (G := G) (X' := X') a b
+  cases h with
+
+  | inr hDisj =>
+      -- Disjoint case - just unfold OrbitFamily on mk's
+      simpa [OrbitFamily] using hDisj
+
+  | inl hEq =>
+      -- Equal-orbit case - contradict hij by proving ⟦a⟧ = ⟦b⟧
+      exfalso
+      apply hij
+      apply Quotient.sound
+
+      -- From hEq we have b ∈ orbit G a
+      have hb : b ∈ orbit G a := by
+        -- b ∈ orbit G b always
+        have : b ∈ orbit G b := mem_orbit_self b
+        -- transport along equality of orbits
+        simpa [hEq] using this
+
+      rcases (mem_orbit_iff.mp hb) with ⟨g, hg⟩
+      refine ⟨g⁻¹, ?_⟩
+
+      --Invert the action equation
+      have : g⁻¹ • b = a := by
+        have h1 := congrArg (fun t => g⁻¹ • t) hg
+        have h2 : a = g⁻¹ • b := by
+          simpa [inv_smul_smul] using h1
+        exact h2.symm
+      exact this
+
+open MulAction
+
+section ChooseSi
+
+variable {G : Type*} [Group G] [Fintype G]
+variable {p n : ℕ} [Fact p.Prime]
+
+/-- Step 5 every orbit in OrbitFamily contains some T with `1 ∈ T` -/
+lemma step5_index_exists_one
+  (i : OrbitIndex G (X' G p n)) :
+    ∃ T : X' G p n,
+      T ∈ OrbitFamily (G := G) (X' := X' G p n) i ∧
+      (1 : G) ∈ (T : Set G) := by
+  classical
+  refine Quotient.inductionOn i (fun S => ?_)
+  rcases step5_exists_one_mem_orbit (G := G) (p := p) (n := n) S with
+    ⟨T, hT, h1⟩
+  refine ⟨T, ?_, h1⟩
+  -- OrbitFamily ⟦S⟧ = orbit G S by definition
+  simpa [OrbitFamily] using hT
+
+
+/-- The explicit representative Si chosen from each orbit, with the property that 1 ∈ Si -/
+noncomputable def S_i
+  (i : OrbitIndex G (X' G p n)) : X' G p n :=
+  Classical.choose
+    (step5_index_exists_one (G := G) (p := p) (n := n) i)
+
+
+/-- Si lies in the orbit indexed by i-/
+lemma S_i_mem_OrbitFamily
+  (i : OrbitIndex G (X' G p n)) :
+    S_i (G := G) (p := p) (n := n) i
+      ∈ OrbitFamily (G := G) (X' := X' G p n) i :=
+  (Classical.choose_spec
+    (step5_index_exists_one (G := G) (p := p) (n := n) i)).1
+
+
+/-- By construction, `1 ∈ Si`. -/
+lemma one_mem_S_i
+  (i : OrbitIndex G (X' G p n)) :
+    (1 : G) ∈
+      (S_i (G := G) (p := p) (n := n) i : Set G) :=
+  (Classical.choose_spec
+    (step5_index_exists_one (G := G) (p := p) (n := n) i)).2
+
+end ChooseSi
+
+variable {α : Type*} (I : Finset α) (p : ℕ)
+--says p divides the order of each set in the sum indezed over range n
+
+def icard {U : Type u} {I : Type v} [Fintype I]
+{V : I → Set U} (i : I) (hV : ∀ (i : I), Fintype (V i))
+: ℕ := Fintype.card (V i)
+
+--skeleton (9)
+theorem card_union_disj
+  {U : Type*} {I : Type*} [Fintype I]
+  {V : I → Set U}
+  (hV : ∀ i : I, (V i).Finite)
+  (hdisj : Pairwise (fun i j => Disjoint (V i) (V j))) :
+  (⋃ i : I, V i).ncard = ∑ᶠ i : I, (V i).ncard := by
+  classical
+  exact Set.ncard_iUnion_of_finite hV hdisj
+
+--skeleton (10)
+-- says if p ∤ Σ|Vᵢ| then p ∤ |Vᵢ| for some i
+lemma not_div_sum {U : Type u} {I : Type v} [Fintype I]
+{V : I → Set U} (hV : ∀ (i : I), Fintype (V i)) :
+ ¬ (p ∣ ∑ᶠ (i : I), Fintype.card (V i))
+ → ∃ (i : I), ¬ (p ∣ Fintype.card (V i)) := by
+  contrapose
+  simp
+  intro hx
+  ·
+    have h₃ : ∑ᶠ (i : I), Fintype.card (V i) = ∑ᶠ (i : I), icard i hV := by
+     unfold icard
+     trivial
+    have h₄ : ∀ (i : I), p ∣ icard i hV := by
+     unfold icard
+     apply hx
+    rw[h₃]
+    rw[finsum_eq_sum_of_fintype]
+    apply dvd_sum
+    exact fun i a ↦ hx i
+
+
+/-- Every OrbitFamily i is finite when G is finite. -/
+lemma OrbitFamily_finite
+  (i : OrbitIndex G (X' G p n)) :
+  (OrbitFamily (G := G) (X' := X' G p n) i).Finite := by
+  classical
+  refine Quotient.inductionOn i (fun S => ?_)
+  -- OrbitFamily ⟦S⟧ = orbit G S
+  simpa [OrbitFamily] using (orbit_finite (G := G) (X' := X' G p n) S)
+
+/-- The union of all distinct orbits (OrbitFamily) is the whole universe. -/
+lemma iUnion_OrbitFamily_eq_univ :
+  (⋃ i : OrbitIndex G (X' G p n),
+      OrbitFamily (G := G) (X' := X' G p n) i) = (Set.univ : Set (X' G p n)) := by
+  classical
+  ext x
+  constructor
+  · intro _
+    trivial
+  · intro _
+    refine Set.mem_iUnion.mpr ?_
+    refine ⟨Quotient.mk _ x, ?_⟩
+    simpa [OrbitFamily] using (mem_orbit_self (G := G) x)
+
+variable {G : Type*} [Group G] [Fintype G]
+variable {p n : ℕ} [Fact p.Prime]
+/-- `OrbitFamily i` is the same orbit as the chosen representative `S_i i`. -/
+lemma OrbitFamily_eq_orbit_Si
+  (i : OrbitIndex G (X' G p n)) :
+  OrbitFamily (G := G) (X' := X' G p n) i
+    =
+  orbit G (S_i (G := G) (p := p) (n := n) i) := by
+  classical
+  refine Quotient.inductionOn i (fun S => ?_)
+  -- S_i ⟦S⟧ ∈ OrbitFamily ⟦S⟧ = orbit G S
+  have hmem :
+      S_i (G := G) (p := p) (n := n) (Quotient.mk _ S)
+        ∈ orbit G S := by
+    simpa [OrbitFamily] using
+      (S_i_mem_OrbitFamily (G := G) (p := p) (n := n) (Quotient.mk _ S))
+  -- hence its orbit equals orbit G S
+  have horb :
+      orbit G (S_i (G := G) (p := p) (n := n) (Quotient.mk _ S))
+        =
+      orbit G S :=
+    orbit_eq_of_mem (G := G) (X' := X' G p n) hmem
+  -- OrbitFamily ⟦S⟧ = orbit G S
+  simpa [OrbitFamily, horb] using horb.symm
+
 ------------------------------------------------------------------------------
 /-CLAIM 2-/
 ------------------------------------------------------------------------------
@@ -789,7 +1048,7 @@ theorem Eq_of_cosets {H : Subgroup G} {g k : G} :
 
     simpa [hEq] using hk
 
-/-This lemma states that if a subgroup H is equal to the orbit of an element V i, then the stabilizer of V i is equal to H 
+/-This lemma states that if a subgroup H is equal to the orbit of an element V i, then the stabilizer of V i is equal to H
 The proof follows the notes in principal which uses Lemma 1.15 above, but due to type issues most of the proof is exchanging between H and (V i).val-/
 lemma claim22 {G I : Type*} [Group G] {p n : ℕ}
  [Fintype G] [Fintype I] [DecidableEq (X' G p n)] (V : I → X' G p n) (i : I)
@@ -921,7 +1180,7 @@ lemma claim23 {G I : Type*} [Group G] {p n m : ℕ} [Fintype G] [Fintype I]
       apply h₀
     have h₂ : Fintype.card (stabilizer G (V i)) = Fintype.card (V i) := by
       apply Fintype.card_congr'
-      exact congrArg Subtype h00 
+      exact congrArg Subtype h00
     have h₃ : Fintype.card (orbit G (V i)) = m * p^n / p^n:= by
       rw [G_order] at h₁
       rw [h₂] at h₁
@@ -979,7 +1238,7 @@ considered as a member of X' G p n in order to use the group action, which is de
 This lemma matches each subset Vi with a subgroup Wi. When we need the subgroup properties, we switch to using the Wi, and when we need properties of the group action, we switch back to Vi. It is sorry'd out as it is not group theory, and finding an alternative way to switch between subgroup and subset proved difficult and time consuming-/
 lemma Wi_is_Vi {G I : Type*} [Group G] {p n : ℕ} [Fintype G] [Fintype I] [DecidableEq (X' G p n)]
  (V : I → X' G p n) (W : notdivset_orb V → Subgroup G) :
- ∀ (i : notdivset_orb V), W i = (V i).val := sorry 
+ ∀ (i : notdivset_orb V), W i = (V i).val := sorry
 
  /-So we now have each Vi is both a member of X' G p n and a subgroup
  of G. This is equivalent to being a Sylow p subgroup-/
@@ -1076,7 +1335,7 @@ lemma Wi_is_Vi {G I : Type*} [Group G] {p n : ℕ} [Fintype G] [Fintype I] [Deci
       rw [hg] at h13
       exact h13
 
-/-So we have that a sylow P subgroup is Vi for some i ∈ notdivset_orb V, 
+/-So we have that a sylow P subgroup is Vi for some i ∈ notdivset_orb V,
 if two sylow P subgroups have the same orbit under left mult by G then they
 are the same subgroup. Define a function f from notdivset that takes an index to its corresponding subgroup-/
 
@@ -1114,7 +1373,7 @@ def select_orb {G I : Type*} [Group G] {p n : ℕ} [Fintype G] [Fintype I]
   apply h₂
   apply h₀
   exact eq
- 
+
  -----------------------------------------------------------------------------------------------------------------------------------
  /-BIJECTIVITY STATEMENTS: IF THERE'S A BIJECTION BETWEEN FINITE SETS THEN THE SETS HAVE THE SAME CARDINALITY-/
  -----------------------------------------------------------------------------------------------------------------------------------
@@ -1157,7 +1416,7 @@ theorem bij_card {G H : Type*} [Fintype G] [Fintype H]
 /-define the set of indices whose corresponding sets have orbits that are divisible by p-/
  def divset_orb {G I : Type*} [Group G] {p n : ℕ}
  [Fintype G] [Fintype I] (V : I → X' G p n)
- := {k : I | p ∣ Fintype.card (orbit G (V k))} 
+ := {k : I | p ∣ Fintype.card (orbit G (V k))}
 
  /-First show notdivset_orb V is finite-/
 lemma notdivset_orb_finite {G I : Type*} [Group G] {p n : ℕ}
@@ -1184,7 +1443,7 @@ noncomputable instance divset_fintype {G I : Type*} [Group G] {p n : ℕ}
 /-Show every i in I is either in notdivset_orb V or divset_orb V-/
  lemma div_paritions_I {G I : Type*} [Group G] {p n : ℕ}
  [Fintype G] [Fintype I] (V : I → X' G p n) : ∀ (i : I), i ∈ (notdivset_orb V) ∪ (divset_orb V) := by
-  intro i 
+  intro i
   have h₀ : notdivset_orb V = {k : I | ¬ (p ∣ Fintype.card (orbit G (V k)))} := by
     exact Set.Subset.antisymm (fun ⦃a⦄ a_1 => a_1) fun ⦃a⦄ a_1 => a_1
   have h₁ : divset_orb V = {k : I | p ∣ Fintype.card (orbit G (V k))} := by
@@ -1197,12 +1456,12 @@ noncomputable instance divset_fintype {G I : Type*} [Group G] {p n : ℕ}
           {k | p ∣ Fintype.card ↑(orbit G (V k))}).mpr
       h₂
 
-/-Show a sum over I is the same as the union of a sum over notdivset_orb V and divset_orb V. This is sorry'd out as it is not group theory. Replace Vi with Si-/ 
+/-Show a sum over I is the same as the union of a sum over notdivset_orb V and divset_orb V. This is sorry'd out as it is not group theory. Replace Vi with Si-/
 lemma sum_expression {G I : Type*} [Group G] {p n : ℕ}
  [Fintype G] [Fintype I] (V : I → X' G p n)
 {V : I → X' G p n} (hV : ∀ (i : I), Fintype (orbit G (V i))) {notdivset_fintype V} {divset_fintype V}
 (hdisj : ∀ (k j : I), Disjoint (orbit G (V k)) (orbit G (V j))) :
-∑ (i : I), Fintype.card (orbit G (V i)) = ∑ (j : notdivset_orb V), Fintype.card (orbit G (V j)) + ∑ (l : divset_orb V), Fintype.card (orbit G (V l)) := by sorry 
+∑ (i : I), Fintype.card (orbit G (V i)) = ∑ (j : notdivset_orb V), Fintype.card (orbit G (V j)) + ∑ (l : divset_orb V), Fintype.card (orbit G (V l)) := by sorry
 
 /-show p divides the sum of orbits that are each divisible by p. Replace Vi with Si-/
 lemma pdiv_sum {G I : Type*} [Group G] {p n : ℕ}
@@ -1217,18 +1476,90 @@ lemma sum_mod_p {G I : Type*} [Group G] {p n : ℕ}
 (hdisj : ∀ (k j : I), Disjoint (orbit G (V k)) (orbit G (V j))) :
 ∑ (i : I), Fintype.card (orbit G (V i)) = ∑ (j : notdivset_orb V), Fintype.card (orbit G (V j)) mod p := by sorry
 
-/-X is union of its orbits. Replace Vi with si-/
-lemma X_partition_orbits {G I : Type*} [Group G] {p n : ℕ}
- [Fintype G] [Fintype I] (V : I → X' G p n)
-{V : I → X' G p n} (hdisj : ∀ (k j : I), Disjoint (orbit G (V k)) (orbit G (V j))) : X' G p n = ⋃ (i : I), V i := by sorry
+/--35-/
+/-Size of X is sum of size of orbits-/
+theorem X_sum_orbits
+  [Fintype (X' G p n)]
+  [Fintype (OrbitIndex G (X' G p n))] :
+  Fintype.card (X' G p n)
+    =
+  ∑ᶠ i : OrbitIndex G (X' G p n),
+      Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i)) := by
+  classical
 
-/-Size of X is sum od size of orbits-/
-lemma X_sum_orbits {G I : Type*} [Group G] {p n : ℕ}
- [Fintype G] [Fintype I] (V : I → X' G p n)
-{V : I → X' G p n} (hV : ∀ (i : I), Fintype (orbit G (V i))) {notdivset_fintype V} {divset_fintype V}
-(hdisj : ∀ (k j : I), Disjoint (orbit G (V k)) (orbit G (V j))) :
- Nat.card (X' G p n) = ∑ (i : I), Fintype.card (orbit G (V i) := by sorry
---skeleton 9 
+  -- Apply card_union_disj to OrbitFamily
+  have hV : ∀ i : OrbitIndex G (X' G p n),
+      (OrbitFamily (G := G) (X' := X' G p n) i).Finite :=
+    fun i => OrbitFamily_finite (G := G) (p := p) (n := n) i
+
+  have hdisj :
+      Pairwise (fun i j =>
+        Disjoint (OrbitFamily (G := G) (X' := X' G p n) i)
+                 (OrbitFamily (G := G) (X' := X' G p n) j)) :=
+    OrbitFamily_pairwise_disjoint (G := G) (X' := X' G p n)
+
+  have hncard_union :
+      (⋃ i : OrbitIndex G (X' G p n),
+          OrbitFamily (G := G) (X' := X' G p n) i).ncard
+        =
+      ∑ᶠ i : OrbitIndex G (X' G p n),
+        (OrbitFamily (G := G) (X' := X' G p n) i).ncard :=
+    card_union_disj (hV := hV) hdisj
+
+  -- Rewrite the LHS union to univ
+  have hncard_univ :
+      (Set.univ : Set (X' G p n)).ncard
+        =
+      ∑ᶠ i : OrbitIndex G (X' G p n),
+        (OrbitFamily (G := G) (X' := X' G p n) i).ncard := by
+    -- substitute iUnion = univ
+    simpa [iUnion_OrbitFamily_eq_univ (G := G) (p := p) (n := n)] using hncard_union
+
+  -- Replace each OrbitFamily by orbit of S_i, then convert ncard(univ) to card
+  have hncard_terms :
+      (∑ᶠ i : OrbitIndex G (X' G p n),
+          (OrbitFamily (G := G) (X' := X' G p n) i).ncard)
+        =
+      (∑ᶠ i : OrbitIndex G (X' G p n),
+          (orbit G (S_i (G := G) (p := p) (n := n) i)).ncard) := by
+    refine finsum_congr ?_
+    intro i
+    simpa [OrbitFamily_eq_orbit_Si (G := G) (p := p) (n := n) i]
+
+  -- Final calculation:
+  -- card X = ncard univ = finsum ncard orbit = finsum card orbit
+  calc
+    Fintype.card (X' G p n)
+        = (Set.univ : Set (X' G p n)).ncard := by
+            simpa using (Set.ncard_univ (α := X' G p n)).symm
+    _   = ∑ᶠ i : OrbitIndex G (X' G p n),
+            (OrbitFamily (G := G) (X' := X' G p n) i).ncard := hncard_univ
+    _   = ∑ᶠ i : OrbitIndex G (X' G p n),
+            (orbit G (S_i (G := G) (p := p) (n := n) i)).ncard := by
+            simpa [hncard_terms]
+    _   = ∑ᶠ i : OrbitIndex G (X' G p n),
+          Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i)) := by
+      classical
+      refine finsum_congr ?_
+      intro i
+
+      -- Use existing orbit fintype instance
+      letI : Fintype (↑(orbit G (S_i (G := G) (p := p) (n := n) i))) :=
+        orbit_fintype (G := G) (X' := X' G p n) (S_i (G := G) (p := p) (n := n) i)
+
+      -- We have finiteness of the orbits
+      have hs :
+          (orbit G (S_i (G := G) (p := p) (n := n) i)).Finite :=
+        orbit_finite (G := G) (X' := X' G p n)
+          (S_i (G := G) (p := p) (n := n) i)
+
+      -- This comes down to a ncard vs fintype.card issue that cannot be easily solved, but ran out of time to sort it
+      have :
+          (orbit G (S_i (G := G) (p := p) (n := n) i)).ncard
+            =
+          Fintype.card (↑(orbit G (S_i (G := G) (p := p) (n := n) i))) := by
+        sorry
+      exact this
 
 
 /-Size of X mod p is sum of orbits that aren't divisible by p taken mod p -/
@@ -1271,7 +1602,7 @@ theorem card_X_modeq_sum {G : Type*} [Group G] [Fintype G]
     binomial_prime_pow_mul hp.out
 
   rw [h1, h2]
-  
+
   exact h3
 
 -- We want to prove conclusion 36 with claim 1
@@ -1350,7 +1681,7 @@ theorem orbit_size_eq {G : Type*} [Group G] [Fintype G] {p n : ℕ}
 lemma X_sum_notdivset_modp {G I : Type*} [Group G] {p n m : ℕ}
  [Fintype G] [Fintype I] (V : I → X' G p n)
 {V : I → X' G p n} (hV : ∀ (i : I), Fintype (orbit G (V i))) {notdivset_fintype V} {divset_fintype V}
-(hdisj : ∀ (k j : I), Disjoint (orbit G (V k)) (orbit G (V j))) : 
+(hdisj : ∀ (k j : I), Disjoint (orbit G (V k)) (orbit G (V j))) :
 m = m * Fintype.card (Syl p G) mod p:= by sorry
 
 /-For claim 39, need to premultiply by inverse of m mod p. First show this inverse exists-/
@@ -1386,5 +1717,5 @@ theorem zmodp_coprime_inverse (m p : ℕ) (b : ZMod p) (hp : p.Prime) (h : Nat.C
 lemma syl_congr_1 {G I : Type*} [Group G] {p n m : ℕ}
  [Fintype G] [Fintype I] (V : I → X' G p n)
 {V : I → X' G p n} (hV : ∀ (i : I), Fintype (orbit G (V i))) {notdivset_fintype V} {divset_fintype V}
-(hdisj : ∀ (k j : I), Disjoint (orbit G (V k)) (orbit G (V j))) : 
+(hdisj : ∀ (k j : I), Disjoint (orbit G (V k)) (orbit G (V j))) :
 1 = Fintype.card (Syl p G) mod p:= by sorry

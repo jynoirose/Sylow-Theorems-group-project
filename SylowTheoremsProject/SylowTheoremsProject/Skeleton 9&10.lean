@@ -11,14 +11,17 @@ universe u v
 variable {G : Type*} [Group G] [Fintype G]
 variable {p n : ℕ} [Fact p.Prime]
 
+variable {G : Type*} [Group G] [Fintype G]
+variable {p n : ℕ} [Fact p.Prime]
+
 /--Step 5 for every `S : X G p n`, there exists `T` in the orbit of `S` such that `1 ∈ T`-/
-lemma step5_exists_one_mem_orbit (S : (X G p n)) :
-    ∃ T : (X G p n), T ∈ orbit G S ∧ (1 : G) ∈ (T : Set G) := by
+lemma step5_exists_one_mem_orbit (S : (X' G p n)) :
+    ∃ T : (X' G p n), T ∈ orbit G S ∧ (1 : G) ∈ (T : Set G) := by
   classical
 
-  -- `S ∈ X G p n` means `|S| = p^n`
+  -- `S ∈ X' G p n` means `|S| = p^n`
   have hNat : Nat.card ((S : Set G)) = p ^ n := by
-    simpa [X] using (S.property)
+    simpa [X'] using (S.property)
 
   -- Put a Fintype on the underlying set so we can use Fintype.card lemmas
   letI : Fintype (↑(S : Set G)) := Fintype.ofFinite (↑(S : Set G))
@@ -46,11 +49,11 @@ lemma step5_exists_one_mem_orbit (S : (X G p n)) :
 
 /--Step 6-/
 lemma orbit_eq_of_mem
-  {G X : Type*} [Group G] [MulAction G X]
-  {S T : X} (h : T ∈ orbit G S) :
+  {G X' : Type*} [Group G] [MulAction G X']
+  {S T : X'} (h : T ∈ orbit G S) :
   orbit G T = orbit G S := by
   --Orbits are either equal or disjoint
-  have h' := orbit_disjoint_or_eq (G := G) (X := X) T S
+  have h' := orbit_disjoint_or_eq (G := G) (X' := X') T S
   cases h' with
   --They are equal and we are done
   | inl hEq =>
@@ -64,32 +67,32 @@ lemma orbit_eq_of_mem
       have : False := (Set.disjoint_left.1 hDisj) hTT h
       exact False.elim this
 
-/-- Step 7 -/
-/-- The type of distinct orbits, i.e., the quotient of X by the orbit relation -/
-def OrbitIndex (G X : Type*) [Group G] [MulAction G X] :=
-  Quotient (MulAction.orbitRel G X)
+/-- Step 7 The type of distinct orbits, i.e., the quotient of X by the orbit relation -/
+
+def OrbitIndex (G X' : Type*) [Group G] [MulAction G X'] :=
+  Quotient (MulAction.orbitRel G X')
 
 /-- The family of distinct orbits, indexed without repetition. -/
 def OrbitFamily
-  {G X : Type*} [Group G] [MulAction G X] :
-  OrbitIndex G X → Set X :=
+  {G X' : Type*} [Group G] [MulAction G X'] :
+  OrbitIndex G X' → Set X' :=
   Quotient.lift
-    (fun x : X => orbit G x) -- representative orbit
+    (fun x : X' => orbit G x) -- representative orbit
     (by
       intro a b hab
       -- `hab : ∃ g0, g0 • b = a`  (orbit relation)
       rcases hab with ⟨g0, hg0⟩
       ext x
       constructor
-      · --Forward directionx - `x ∈ orbit G a → x ∈ orbit G b`
+      ·  --Forward directionx - `x ∈ orbit G a → x ∈ orbit G b`
         rintro ⟨g, rfl⟩
         refine ⟨g * g0, ?_⟩
-        -- (g * g0) • b = g • (g0 • b) = g • a
+        -- `(g * g0) • b = g • (g0 • b) = g • a`
         simp [mul_smul, hg0]
       · -- Backward direction - `x ∈ orbit G b → x ∈ orbit G a`
         rintro ⟨g, rfl⟩
         refine ⟨g * g0⁻¹, ?_⟩
-        -- rewrite g0⁻¹•a = b using hg0
+        -- rewrite `g0⁻¹•a = b` using hg0
         have hb : g0⁻¹ • a = b := by
           have h1 : g0⁻¹ • (g0 • b) = g0⁻¹ • a :=
             congrArg (fun t => g0⁻¹ • t) hg0
@@ -103,9 +106,9 @@ def OrbitFamily
 
 /-- Step 7 - range OrbitFamily = range orbit -/
 lemma OrbitFamily_surjective
-  {G X : Type*} [Group G] [MulAction G X] :
-  Set.range (OrbitFamily (G := G) (X := X))
-    = Set.range (orbit G : X → Set X) := by
+  {G X' : Type*} [Group G] [MulAction G X'] :
+  Set.range (OrbitFamily (G := G) (X' := X'))
+    = Set.range (orbit G : X' → Set X') := by
   classical
   ext A
   constructor
@@ -122,10 +125,10 @@ lemma OrbitFamily_surjective
 
 /--Distinct orbit indices give disjoint orbits --/
 lemma OrbitFamily_pairwise_disjoint
-  {G X : Type*} [Group G] [MulAction G X] :
+  {G X' : Type*} [Group G] [MulAction G X'] :
   Pairwise (fun i j =>
-    Disjoint (OrbitFamily (G := G) (X := X) i)
-             (OrbitFamily (G := G) (X := X) j)) := by
+    Disjoint (OrbitFamily (G := G) (X':= X') i)
+             (OrbitFamily (G := G) (X' := X') j)) := by
   classical
   intro i j hij
   -- push inequality inside quotient induction
@@ -135,7 +138,7 @@ lemma OrbitFamily_pairwise_disjoint
   -- now hij : ⟦a⟧ ≠ ⟦b⟧
 
   -- use orbit disjoint-or-equal lemma
-  have h := orbit_disjoint_or_eq (G := G) (X := X) a b
+  have h := orbit_disjoint_or_eq (G := G) (X' := X') a b
   cases h with
 
   | inr hDisj =>
@@ -166,6 +169,140 @@ lemma OrbitFamily_pairwise_disjoint
         exact h2.symm
       exact this
 
+open MulAction
+
+section ChooseSi
+
+variable {G : Type*} [Group G] [Fintype G]
+variable {p n : ℕ} [Fact p.Prime]
+
+/-- Step 5 every orbit in OrbitFamily contains some T with `1 ∈ T` -/
+lemma step5_index_exists_one
+  (i : OrbitIndex G (X' G p n)) :
+    ∃ T : X' G p n,
+      T ∈ OrbitFamily (G := G) (X' := X' G p n) i ∧
+      (1 : G) ∈ (T : Set G) := by
+  classical
+  refine Quotient.inductionOn i (fun S => ?_)
+  rcases step5_exists_one_mem_orbit (G := G) (p := p) (n := n) S with
+    ⟨T, hT, h1⟩
+  refine ⟨T, ?_, h1⟩
+  -- OrbitFamily ⟦S⟧ = orbit G S by definition
+  simpa [OrbitFamily] using hT
+
+
+/-- The explicit representative Si chosen from each orbit, with the property that 1 ∈ Si -/
+noncomputable def S_i
+  (i : OrbitIndex G (X' G p n)) : X' G p n :=
+  Classical.choose
+    (step5_index_exists_one (G := G) (p := p) (n := n) i)
+
+
+/-- Si lies in the orbit indexed by i-/
+lemma S_i_mem_OrbitFamily
+  (i : OrbitIndex G (X' G p n)) :
+    S_i (G := G) (p := p) (n := n) i
+      ∈ OrbitFamily (G := G) (X' := X' G p n) i :=
+  (Classical.choose_spec
+    (step5_index_exists_one (G := G) (p := p) (n := n) i)).1
+
+
+/-- By construction, `1 ∈ Si`. -/
+lemma one_mem_S_i
+  (i : OrbitIndex G (X' G p n)) :
+    (1 : G) ∈
+      (S_i (G := G) (p := p) (n := n) i : Set G) :=
+  (Classical.choose_spec
+    (step5_index_exists_one (G := G) (p := p) (n := n) i)).2
+
+end ChooseSi
+
+variable {α : Type*} (I : Finset α) (p : ℕ)
+--says p divides the order of each set in the sum indezed over range n
+
+def icard {U : Type u} {I : Type v} [Fintype I]
+{V : I → Set U} (i : I) (hV : ∀ (i : I), Fintype (V i))
+: ℕ := Fintype.card (V i)
+
+--skeleton (9)
+theorem card_union_disj
+  {U : Type*} {I : Type*} [Fintype I]
+  {V : I → Set U}
+  (hV : ∀ i : I, (V i).Finite)
+  (hdisj : Pairwise (fun i j => Disjoint (V i) (V j))) :
+  (⋃ i : I, V i).ncard = ∑ᶠ i : I, (V i).ncard := by
+  classical
+  exact Set.ncard_iUnion_of_finite hV hdisj
+
+--skeleton (10)
+-- says if p ∤ Σ|Vᵢ| then p ∤ |Vᵢ| for some i
+lemma not_div_sum {U : Type u} {I : Type v} [Fintype I]
+{V : I → Set U} (hV : ∀ (i : I), Fintype (V i)) :
+ ¬ (p ∣ ∑ᶠ (i : I), Fintype.card (V i))
+ → ∃ (i : I), ¬ (p ∣ Fintype.card (V i)) := by
+  contrapose
+  simp
+  intro hx
+  ·
+    have h₃ : ∑ᶠ (i : I), Fintype.card (V i) = ∑ᶠ (i : I), icard i hV := by
+     unfold icard
+     trivial
+    have h₄ : ∀ (i : I), p ∣ icard i hV := by
+     unfold icard
+     apply hx
+    rw[h₃]
+    rw[finsum_eq_sum_of_fintype]
+    apply dvd_sum
+    exact fun i a ↦ hx i
+
+
+/-- Every OrbitFamily i is finite when G is finite. -/
+lemma OrbitFamily_finite
+  (i : OrbitIndex G (X' G p n)) :
+  (OrbitFamily (G := G) (X' := X' G p n) i).Finite := by
+  classical
+  refine Quotient.inductionOn i (fun S => ?_)
+  -- OrbitFamily ⟦S⟧ = orbit G S
+  simpa [OrbitFamily] using (orbit_finite (G := G) (X' := X' G p n) S)
+
+/-- The union of all distinct orbits (OrbitFamily) is the whole universe. -/
+lemma iUnion_OrbitFamily_eq_univ :
+  (⋃ i : OrbitIndex G (X' G p n),
+      OrbitFamily (G := G) (X' := X' G p n) i) = (Set.univ : Set (X' G p n)) := by
+  classical
+  ext x
+  constructor
+  · intro _
+    trivial
+  · intro _
+    refine Set.mem_iUnion.mpr ?_
+    refine ⟨Quotient.mk _ x, ?_⟩
+    simpa [OrbitFamily] using (mem_orbit_self (G := G) x)
+
+variable {G : Type*} [Group G] [Fintype G]
+variable {p n : ℕ} [Fact p.Prime]
+/-- `OrbitFamily i` is the same orbit as the chosen representative `S_i i`. -/
+lemma OrbitFamily_eq_orbit_Si
+  (i : OrbitIndex G (X' G p n)) :
+  OrbitFamily (G := G) (X' := X' G p n) i
+    =
+  orbit G (S_i (G := G) (p := p) (n := n) i) := by
+  classical
+  refine Quotient.inductionOn i (fun S => ?_)
+  -- S_i ⟦S⟧ ∈ OrbitFamily ⟦S⟧ = orbit G S
+  have hmem :
+      S_i (G := G) (p := p) (n := n) (Quotient.mk _ S)
+        ∈ orbit G S := by
+    simpa [OrbitFamily] using
+      (S_i_mem_OrbitFamily (G := G) (p := p) (n := n) (Quotient.mk _ S))
+  -- hence its orbit equals orbit G S
+  have horb :
+      orbit G (S_i (G := G) (p := p) (n := n) (Quotient.mk _ S))
+        =
+      orbit G S :=
+    orbit_eq_of_mem (G := G) (X' := X' G p n) hmem
+  -- OrbitFamily ⟦S⟧ = orbit G S
+  simpa [OrbitFamily, horb] using horb.symm
 
 variable {α : Type*} (I : Finset α) (p : ℕ) (Prime p)
 --says p divides the order of each set in the sum indezed over range n
