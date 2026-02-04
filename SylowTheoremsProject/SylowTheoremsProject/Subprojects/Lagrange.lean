@@ -1,4 +1,4 @@
-import SylowTheoremsProject.Imports
+import SylowTheoremsProject.Subprojects.Imports
 noncomputable section
 
 variable {G : Type _} [Group G]

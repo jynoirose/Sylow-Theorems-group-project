@@ -1,6 +1,6 @@
-import SylowTheoremsProject.OrbitStabiliser
-import SylowTheoremsProject.Claim1
-import SylowTheoremsProject.NumberTheory
+import SylowTheoremsProject.Subprojects.OrbitStabiliser
+import SylowTheoremsProject.Subprojects.Claim1
+import SylowTheoremsProject.Subprojects.NumberTheory
 
 open MulAction
 

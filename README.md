@@ -37,9 +37,9 @@ They serve as foundational material and are reused throughout the project. We di
 
 ### Final Integration
 
-- `all together.lean`
+- `SylowTheorems.lean`
 
-There is little content in previously mentioned files that is not also in the `all together.lean` file.
+There is little content in previously mentioned files that is not also in the `SylowTheorems.lean` file.
 
 This file integrates the results from all previous files and attempts to assemble them into a proof of the first and fourth Sylow Theorems.
 We were working on different sections in parallel, as such there are several type conflicts that we did not have time to resolve when combining our work. Some theorems are sorry'd as a result.

@@ -1,4 +1,4 @@
-import SylowTheoremsProject.OrbitStabiliser
+import SylowTheoremsProject.Subprojects.OrbitStabiliser
 
 
 open MulAction
