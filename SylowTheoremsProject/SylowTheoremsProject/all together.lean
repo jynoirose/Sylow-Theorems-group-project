@@ -1057,7 +1057,7 @@ def icard {U : Type u} {I : Type v} [Fintype I]
 : ℕ := Fintype.card (V i)
 
 
---skeleton (9), cardinality of disjoint union is sum of cardinatilities 
+--skeleton (9), cardinality of disjoint union is sum of cardinatilities
 theorem card_union_disj
   {U : Type*} {I : Type*} [Fintype I]
   {V : I → Set U}
@@ -1089,7 +1089,7 @@ lemma not_div_sum {U : Type u} {I : Type v} [Fintype I]
     apply dvd_sum
     exact fun i a ↦ hx i
 ------------------------------------------------------------------------------
-/-CLAIM 2, steps 18-33 
+/-CLAIM 2, steps 18-33
 The first step of this section is to define a function from {Orbit G Si ∣ p ∤ |Orbit G Si|} to Si.
 Unfortunately we ran out of time to define this function correctly (I tried to work around it, but the proof ultimately doesn't hold up.-/
 ------------------------------------------------------------------------------
@@ -1546,10 +1546,10 @@ if two sylow P subgroups have the same orbit under left mult by G then they
 are the same subgroup. Define a function f from notdivset that takes an index to its corresponding subgroup-/
 
 
-/- This is where I tried to work around defining the function from {Orbit G Si ∣ p ∤ |Orbit G Si|} to Si by instead 
+/- This is where I tried to work around defining the function from {Orbit G Si ∣ p ∤ |Orbit G Si|} to Si by instead
 defining a function from the notdivset, i.e. the set of all indices whose corresponding orbits are not divisible
-by p. The flaw is that there is no uniqueness; in the proof, we rely on the fact the Si have distinct orbits, but the 
-function defined below could have Orbit(Vi) = (Orbit Vj). This also means the function is not a bijection, as we need 
+by p. The flaw is that there is no uniqueness; in the proof, we rely on the fact the Si have distinct orbits, but the
+function defined below could have Orbit(Vi) = (Orbit Vj). This also means the function is not a bijection, as we need
 to'quotient' out by orbits that are equal. And the bijectivity is the very thing we need.-/
 
 def select_orb {G I : Type*} [Group G] {p n : ℕ} [Fintype G] [Fintype I]
@@ -1634,7 +1634,7 @@ theorem bij_card {G H : Type*} [Fintype G] [Fintype H]
 --------------------------------------------------------------------------------------------------------------------------
 
 
- /-we aim to show |notdivset_orb V| = |Syl p G|-/ 
+ /-we aim to show |notdivset_orb V| = |Syl p G|-/
 
 
 /-Have p is prime-/
@@ -1793,7 +1793,7 @@ def notdivset_Si [Fintype (X' G p n)] [Fintype (OrbitIndex G (X' G p n))] : Set 
 
 
 /-Show every i in I is either in notdivset_Si or divset_Si-/
- lemma div_paritions_I [Fintype (X' G p n)] [Fintype (OrbitIndex G (X' G p n))] : 
+ lemma div_paritions_I [Fintype (X' G p n)] [Fintype (OrbitIndex G (X' G p n))] :
  ∀ (i : OrbitIndex G (X' G p n)), i ∈ (notdivset_Si) ∪ (divset_Si) := by
   intro k
   unfold notdivset_Si
@@ -1911,8 +1911,9 @@ lemma syl_bij_notdivset  [Fintype (X' G p n)]
 /-Each orbit has size m, so sum is in fact congruent to m * |Syl p G|-/
 lemma sum_substituted_modp [Fintype (X' G p n)]
   [Fintype (OrbitIndex G (X' G p n))] :
-  (Fintype.card (X' G p n) : ZMod p)
-    = ((Fintype.card G) / p^n) * Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) := by sorry
+  (Nat.card (X' G p n) : ZMod p)
+    = ↑((Fintype.card G) / p^n) * Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) := by
+    sorry
 
 
 /-For claim 39, need to premultiply by inverse of m mod p. First show this inverse exists-/
@@ -1957,7 +1958,32 @@ lemma syl_congr_1 {G : Type*} [Group G] [Fintype G]
     {p n m : ℕ} [hp : Fact p.Prime] [Fintype (X' G p n)]
   [Fintype (OrbitIndex G (X' G p n))] (hG : Fintype.card G = p ^ n * m)
     (hm : Nat.Coprime m p)
-  : (Fintype.card (X' G p n) : ZMod p)
-    = Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) * ((Fintype.card G) / p^n) := by
-  rw [sum_substituted_modp]
-  ring
+  : (Nat.card (X' G p n) : ZMod p)
+    = Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) * ↑((Fintype.card G) / p^n) := by
+  rw [sum_substituted_modp, mul_comm]
+
+
+theorem syl_eq_1_mod_p {G : Type*} [Group G] [Fintype G]
+    {p n m : ℕ} [hp : Fact p.Prime] [Fintype (X' G p n)]
+  [Fintype (OrbitIndex G (X' G p n))] (hG : Fintype.card G = p ^ n * m)
+    (hm : Nat.Coprime m p) (hp : p.Prime)
+  : Nat.card (Syl_p G p) = (1 : ZMod p) := by
+
+  have mod_eq : (Nat.card (X' G p n) : ZMod p)
+    = ↑((Fintype.card G) / p^n) * Nat.card (notdivset_Si : Set (OrbitIndex G (X' G p n))) := by
+      exact sum_substituted_modp
+
+  rw [@card_X_eq_card_Xsubsets G _ _ p n] at mod_eq
+  rw [@Xsubsets_card_mod G _ _ p n m hp hG] at mod_eq
+  rw [hG] at mod_eq
+  rw [syl_bij_notdivset] at mod_eq
+
+  have : ((p ^ n * m) / (p ^ n)) = m := by
+    refine Eq.symm (Nat.eq_div_of_mul_eq_right ?_ rfl)
+    exact Ne.symm (NeZero.ne' (p ^ n))
+
+  rw [this] at mod_eq
+  apply @zmodp_coprime_inverse m p _ hp hm at mod_eq
+
+  symm
+  exact mod_eq
