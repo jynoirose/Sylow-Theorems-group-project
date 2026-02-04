@@ -15,5 +15,5 @@ We divide the overall proof into several components to enable modular developmen
 The full outline and plan of the project can be found here:  
 [Project Outline](./Project_Outline.pdf)
 
-[Project Plan](PUT_THE_URL_HERE)
+[Project Plan](./Sylow_Plan.pdf)
 
