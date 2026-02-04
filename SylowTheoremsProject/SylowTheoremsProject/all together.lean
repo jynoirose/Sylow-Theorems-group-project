@@ -1817,7 +1817,28 @@ lemma X_sum_mod_p [Fintype (X' G p n)]
   (Fintype.card (X' G p n) : ZMod p)
     =
   (∑ᶠ (i : (notdivset_Si : Set (OrbitIndex G ↑(X' G p n)))),
-      Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i))) := by sorry
+      Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i))) := by
+  have h := X_sum_by_div (G := G) (p := p) (n := n)
+  conv_lhs => rw [h]
+  push_cast
+
+  have hzero : ∀ (i : (divset_Si : Set (OrbitIndex G ↑(X' G p n)))),
+      (Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i)) : ZMod p) = 0 := by
+    intro i
+    have hi : i.val ∈ divset_Si := i.property
+    unfold divset_Si at hi
+    simp only [Set.mem_setOf_eq] at hi
+
+    obtain ⟨k, hk⟩ := hi
+    rw [hk]
+    rw [Nat.cast_mul]
+
+    norm_num
+
+  have hdiv : (∑ᶠ (i : (divset_Si : Set (OrbitIndex G ↑(X' G p n)))),
+      (Fintype.card (orbit G (S_i (G := G) (p := p) (n := n) i)) : ZMod p)) = 0 := by
+    simp only [hzero, finsum_zero]
+  rw [hdiv, add_zero]
 
 open MulAction
 -- We want to prove conclusion 36 with claim 1
