@@ -3,9 +3,9 @@
 This repository contains our group project for the **2025/26 Warwick MA4N1: *Theorem Proving with Lean*** module.  
 Our goal is to formally prove the **Sylow Theorem** using Lean.
 
-During the proof development, we follow the structure and arguments presented in the **Warwick MA3K4: Introduction to Group Theory** lecture notes, in particular **Chapter 3**.  
+During the proof development, we follow the structure and arguments presented in the **Warwick MA3K4: Introduction to Group Theory** lecture notes, in particular **Chapter 3: The Sylow theorems**.  
 Reference link:  
-[MA3K4 Lecture Notes — Chapter 3](https://moodle.warwick.ac.uk/course/view.php?id=71701)
+[MA3K4 Lecture Notes](https://moodle.warwick.ac.uk/course/view.php?id=71701)
 
 ---
 
